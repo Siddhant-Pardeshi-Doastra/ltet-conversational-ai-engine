@@ -1,0 +1,26 @@
+{
+  "lang": "gu",
+  "name": "ગુજરાતી",
+  "script": "Gujarati",
+  "locale": "gu-IN",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "coverage_note": "Generated draft translation of core prompts. Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "એલટીઈટી કર્મચારી ટ્રસ્ટ પોર્ટલ હેલ્પલાઈનમાં આપનું સ્વાગત છે. તમે ઓટોમેટેડ સહાયક સાથે વાત કરી રહ્યા છો, માનવી એજન્ટ સાથે નહીં.",
+    "ask_employee_or_beneficiary": "શું તમે કર્મચારી તરીકે તમારા દાવાઓ વિશે વાત કરી રહ્યા છો, કે કોઈ કર્મચારીના નોંધાયેલા લાભાર્થી તરીકે?",
+    "otp_sent": "તમારા નોંધાયેલા સંપર્ક પર, જે {ending} થી સમાપ્ત થાય છે, ચકાસણી કોડ મોકલવામાં આવ્યો છે. કૃપા કરીને કીપેડ થકી કોડ દાખલ કરો. સુરક્ષા માટે હું તેને ફરી બોલી શકતો નથી.",
+    "verification_success": "આભાર. તમારી ઓળખ ચકાસાઈ ગઈ છે.",
+    "claims_one_confirm": "તમારો એક ખુલ્લો દાવો છે, {claim_id}, {scheme} હેઠળ. શું તમે તેની સ્થિતિ જાણવા માંગો છો?",
+    "claims_many_intro": "તમારા {count} ખુલ્લા દાવા છે. તાજા ત્રણ: {list}. કયા દાવા વિશે જાણવું છે?",
+    "claim_stage_answer": "તમારો દાવો {claim_id} હાલમાં {stage} તબક્કે છે.",
+    "claim_query_note": "કૃપા કરીને નોંધો: {query_stage} તરફથી એક ખુલ્લી પૂછપરછ છે. પૂછપરછ કહે છે: {query_text}. જવાબ આપવા એલટીઈટી પોર્ટલ જુઓ.",
+    "pay_credited": "ચુકવણી જમા થઈ ગઈ છે. {amount} રકમ {credit_date} ના રોજ જમા થઈ. બેંક સંદર્ભ {bank_reference} છે.",
+    "pay_pending": "ફાઇનાન્સે {approval_date} ના રોજ તમારો દાવો મંજૂર કર્યો. ચુકવણી {owner} ટીમ પાસે બાકી છે. ચુકવણીની તારીખ હજી ઉપલબ્ધ નથી.",
+    "more_help": "બીજું કંઈ મદદ કરી શકું? તમે બીજા દાવા વિશે પૂછી શકો છો.",
+    "human_transfer": "હું તમને માનવ હેલ્પડેસ્ક સાથે જોડી રહ્યો છું. કૃપા કરીને લાઇન પર રહો.",
+    "unclear_retry": "માફ કરશો, સમજાયું નહીં. તમે ફરી કહી શકશો?",
+    "final_goodbye": "એલટીઈટી કર્મચારી ટ્રસ્ટ પોર્ટલ હેલ્પલાઈનને કૉલ કરવા બદલ આભાર. આવજો."
+  }
+}

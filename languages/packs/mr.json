@@ -1,0 +1,26 @@
+{
+  "lang": "mr",
+  "name": "मराठी",
+  "script": "Devanagari",
+  "locale": "mr-IN",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "coverage_note": "Generated draft translation of core prompts. Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "एलटीईटी कर्मचारी ट्रस्ट पोर्टल हेल्पलाइनवर स्वागत आहे. तुम्ही स्वयंचलित सहाय्यकाशी बोलत आहात, माणसाशी नाही.",
+    "ask_employee_or_beneficiary": "तुम्ही कर्मचारी म्हणून तुमच्या दाव्यांबद्दल बोलत आहात, का एखाद्या कर्मचाऱ्याच्या नोंदलेल्या लाभार्थी म्हणून?",
+    "otp_sent": "तुमच्या नोंदलेल्या संपर्कावर, जो {ending} ने संपतो, पडताळणी कोड पाठवला आहे. कृपया कोड कीपॅडवरून टाका. सुरक्षेसाठी मी तो पुन्हा सांगू शकत नाही.",
+    "verification_success": "धन्यवाद. तुमची ओळख पडताळली गेली आहे.",
+    "claims_one_confirm": "तुमचा एक खुला दावा आहे, {claim_id}, {scheme} अंतर्गत. त्याची स्थिती जाणून घ्यायची आहे का?",
+    "claims_many_intro": "तुमचे {count} खुले दावे आहेत. अलीकडील तीन: {list}. कोणत्या दाव्याबद्दल जाणून घ्यायचे?",
+    "claim_stage_answer": "तुमचा दावा {claim_id} सध्या {stage} टप्प्यावर आहे.",
+    "claim_query_note": "कृपया लक्ष द्या: {query_stage} कडून एक खुली चौकशी आहे. चौकशी म्हणते: {query_text}. उत्तर देण्यासाठी एलटीईटी पोर्टल पहा.",
+    "pay_credited": "पेमेंट जमा झाले आहे. {amount} रक्कम {credit_date} रोजी जमा झाली. बँक संदर्भ {bank_reference} आहे.",
+    "pay_pending": "वित्त विभागाने {approval_date} रोजी तुमचा दावा मंजूर केला. पेमेंट {owner} टीमकडे प्रलंबित आहे. पेमेंटची तारीख अद्याप उपलब्ध नाही.",
+    "more_help": "अजून काही मदत करू का? तुम्ही दुसऱ्या दाव्याबद्दल विचारू शकता.",
+    "human_transfer": "मी तुम्हाला मानवी हेल्पडेस्कशी जोडत आहे. कृपया लाइनवर रहा.",
+    "unclear_retry": "क्षमस्व, समजले नाही. तुम्ही पुन्हा सांगाल का?",
+    "final_goodbye": "एलटीईटी कर्मचारी ट्रस्ट पोर्टल हेल्पलाइनला कॉल केल्याबद्दल धन्यवाद. नमस्कार."
+  }
+}

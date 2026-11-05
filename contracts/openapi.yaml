@@ -1,0 +1,247 @@
+openapi: 3.1.0
+info:
+  title: LTET Conversational AI Engine — API & Mock LTET Portal Contracts
+  version: 1.0.0-proposed
+  description: |
+    PROPOSED contracts for the LTET Conversational AI Engine Release 1 demo build
+    (DOASTRA). These are NOT supplied production APIs: endpoint names and schemas
+    are proposals until LTET/DOASTRA approve them (docs/INTEGRATIONS.md).
+
+    Two surfaces are described:
+    1. Engine/Helpdesk API — consumed by the demo console and, in live mode, by
+       LTET portal integrations.
+    2. Mock LTET Portal (IR-02/04/05/06) — the synthetic system of record used in
+       demo mode; a live adapter implements the same read contracts against the
+       configured LTET endpoints.
+
+    Security model: staff endpoints require an authenticated session cookie;
+    caller identity is derived from the server-side verified session (SEC-02/05);
+    OTP codes never appear in any API response.
+servers:
+  - url: http://127.0.0.1:8787
+    description: Local demo
+tags:
+  - name: Health
+  - name: Auth
+  - name: Calls
+  - name: Verification
+  - name: WorkQueue
+  - name: Claims
+  - name: Analytics
+  - name: Admin
+  - name: Demo (mode-gated)
+  - name: Telephony
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Liveness
+      responses:
+        '200': { description: OK }
+  /api/readiness:
+    get:
+      tags: [Health]
+      summary: Integration readiness (live mode FAILS when config is missing)
+      responses:
+        '200':
+          description: Readiness report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mode: { type: string, enum: [demo, live] }
+                  ready: { type: boolean }
+                  blocking: { type: array, items: { type: string } }
+                  integrations: { type: array, items: { type: object } }
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Staff login (sets httpOnly session cookie)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string, format: password }
+      responses:
+        '200': { description: Authenticated }
+        '401': { description: Invalid credentials }
+  /api/auth/logout:
+    post: { tags: [Auth], summary: End staff session, responses: { '200': { description: OK } } }
+  /api/auth/me:
+    get: { tags: [Auth], summary: Current staff identity + scopes, responses: { '200': { description: OK }, '401': { description: Not signed in } } }
+  /api/auth/switch-role:
+    post:
+      tags: [Auth]
+      summary: Demo role switcher (403 in live mode — SEC-05)
+      responses:
+        '200': { description: Switched (demo only) }
+        '403': { description: Blocked in live mode }
+  /api/calls:
+    post:
+      tags: [Calls]
+      summary: Start a call session (simulator or adapter boundary)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                caller_number: { type: string, description: synthetic/trusted caller id }
+                force_busy: { type: boolean, description: demo busy fallback (FR-51) }
+                scenario: { type: string }
+      responses:
+        '201': { description: Session created with greeting/notice replies }
+  /api/calls/{id}/events:
+    post:
+      tags: [Calls]
+      summary: Trusted call event (utterance | keypad | hangup)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties: { type: { enum: [utterance] }, text: { type: string, maxLength: 2000 } }
+                - type: object
+                  properties: { type: { enum: [keypad] }, digits: { type: string, pattern: '^[\d*#]{1,20}$' } }
+                - type: object
+                  properties: { type: { enum: [hangup] }, expected: { type: boolean } }
+      responses:
+        '200':
+          description: Machine result (replies, state, masked session). Keypad digits are never echoed or stored (SEC-04).
+        '409': { description: Session already ended }
+  /api/calls:
+    get:
+      tags: [Calls]
+      summary: Searchable call list (FR-38)
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: outcome, in: query, schema: { type: string, enum: [resolved, escalated, verification_failed, abandoned] } }
+        - { name: language, in: query, schema: { type: string } }
+      responses:
+        '200': { description: Paged call logs (identifiers masked) }
+  /api/calls/{id}:
+    get:
+      tags: [Calls]
+      summary: Session detail with transcript + events (masked)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Session, transcript, events }
+  /api/calls/{id}/log:
+    get:
+      tags: [Calls]
+      summary: Immutable final call log + claim entries + document history + answer evidence (FR-32/33, NFR-09)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Call log }
+        '404': { description: Not finalised yet }
+  /api/calls/{id}/transcript:
+    get:
+      tags: [Calls]
+      summary: Role-aware transcript access (FR-36). Audited on every attempt.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Allowed for admin/auditor roles }
+        '403': { description: Processor roles receive summaries instead }
+  /api/claims/{id}/context:
+    get:
+      tags: [Claims]
+      summary: Read-only claim context, stage-scoped for processors (SEC-05)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Claim facts, open query, payment, history timeline }
+        '403': { description: Outside the caller's stage scope }
+  /api/queue/alerts:
+    get:
+      tags: [WorkQueue]
+      summary: Persona-scoped processor alert queue (FR-30/35)
+      responses:
+        '200': { description: Alerts filtered by the caller's persona routing }
+  /api/alerts/{id}/ack:
+    post: { tags: [WorkQueue], summary: Acknowledge alert, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK }, '403': { description: Not your queue } } }
+  /api/alerts/{id}/close:
+    post: { tags: [WorkQueue], summary: Close alert, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK }, '403': { description: Not your queue } } }
+  /api/callbacks:
+    get: { tags: [WorkQueue], summary: Callback requests (human service tasks), responses: { '200': { description: OK } } }
+  /api/notes:
+    post: { tags: [WorkQueue], summary: Append processor note (separate from immutable logs), responses: { '201': { description: Created } } }
+  /api/analytics/overview:
+    get: { tags: [Analytics], summary: Derived analytics (FR-29), parameters: [{ name: days, in: query, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /api/analytics/reports/generate:
+    post: { tags: [Analytics], summary: Generate daily/weekly report (FR-31), responses: { '201': { description: Created } } }
+  /api/admin/policy:
+    get: { tags: [Admin], summary: Published policy + version history, responses: { '200': { description: OK } } }
+  /api/admin/policy/draft:
+    post: { tags: [Admin], summary: Create draft (unsafe/inconsistent values rejected — FR-39), responses: { '201': { description: Draft created }, '422': { description: Validation errors } } }
+  /api/admin/policy/{version}/approve:
+    post: { tags: [Admin], summary: Approve draft, parameters: [{ name: version, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /api/admin/policy/{version}/publish:
+    post: { tags: [Admin], summary: Publish approved version, parameters: [{ name: version, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /api/admin/policy/{version}/rollback:
+    post: { tags: [Admin], summary: Roll back to a version, parameters: [{ name: version, in: path, required: true, schema: { type: integer } }], responses: { '200': { description: OK } } }
+  /api/admin/languages:
+    get: { tags: [Admin], summary: 12 language packs with review status (FR-37), responses: { '200': { description: OK } } }
+  /api/admin/retention/run:
+    post: { tags: [Admin], summary: Governed, audited retention purge (FR-34), responses: { '200': { description: Purge counts } } }
+  /api/admin/audit:
+    get: { tags: [Admin], summary: Audit trail (NFR-09), responses: { '200': { description: OK } } }
+  /api/demo/reset:
+    post: { tags: [Demo (mode-gated)], summary: Reset synthetic data (403 in live), responses: { '200': { description: OK }, '403': { description: Blocked in live mode } } }
+  /api/demo/scenarios:
+    get: { tags: [Demo (mode-gated)], summary: Scenario catalogue, responses: { '200': { description: OK } } }
+  /api/demo/faults:
+    post: { tags: [Demo (mode-gated)], summary: Fault injection on the mock portal only (403 in live), responses: { '200': { description: OK }, '403': { description: Blocked in live mode } } }
+  /api/demo/inbox:
+    get:
+      tags: [Demo (mode-gated)]
+      summary: |
+        Isolated DEMO mock SMS inbox (SEC-04). Simulates the synthetic user's
+        phone. The ONLY surface where an OTP code is visible; blocked in live mode.
+      responses:
+        '200': { description: OK (demo only) }
+        '403': { description: Blocked in live mode }
+  /api/telephony/webhook:
+    post:
+      tags: [Telephony]
+      summary: Live carrier event boundary (IR-01). HMAC-SHA256 + timestamp + nonce replay protection (SEC-07).
+      parameters:
+        - { name: x-ltet-signature, in: header, required: true, schema: { type: string } }
+        - { name: x-ltet-timestamp, in: header, required: true, schema: { type: string } }
+        - { name: x-ltet-nonce, in: header, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event: { type: string, enum: [call.started, utterance, keypad, hangup] }
+                call_id: { type: string }
+                from: { type: string }
+                text: { type: string }
+                digits: { type: string }
+      responses:
+        '201': { description: Call started }
+        '200': { description: Event applied }
+        '401': { description: Signature/timestamp/replay failure }
+        '503': { description: Webhook secret not configured }
+components:
+  securitySchemes:
+    staffSession:
+      type: apiKey
+      in: cookie
+      name: ltet_staff
+security:
+  - staffSession: []

@@ -1,0 +1,26 @@
+{
+  "lang": "pa",
+  "name": "ਪੰਜਾਬੀ",
+  "script": "Gurmukhi",
+  "locale": "pa-IN",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "coverage_note": "Generated draft translation of core prompts. Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "ਐੱਲਟੀਈਟੀ ਕਰਮਚਾਰੀ ਟਰੱਸਟ ਪੋਰਟਲ ਹੈਲਪਲਾਈਨ ਵਿੱਚ ਤੁਹਾਡਾ ਸਵਾਗਤ ਹੈ। ਤੁਸੀਂ ਆਟੋਮੈਟਿਡ ਸਹਾਇਕ ਨਾਲ ਗੱਲ ਕਰ ਰਹੇ ਹੋ, ਕਿਸੇ ਮਨੁੱਖੀ ਏਜੰਟ ਨਾਲ ਨਹੀਂ।",
+    "ask_employee_or_beneficiary": "ਕੀ ਤੁਸੀਂ ਕਰਮਚਾਰੀ ਵਜੋਂ ਆਪਣੇ ਦਾਅਵਿਆਂ ਬਾਰੇ ਗੱਲ ਕਰ ਰਹੇ ਹੋ, ਜਾਂ ਕਿਸੇ ਕਰਮਚਾਰੀ ਦੇ ਦਰਜ ਲਾਭਾਰਥੀ ਵਜੋਂ?",
+    "otp_sent": "ਤੁਹਾਡੇ ਰਜਿਸਟਰਡ ਸੰਪਰਕ, ਜੋ {ending} 'ਤੇ ਖਤਮ ਹੁੰਦਾ ਹੈ, 'ਤੇ ਇੱਕ ਤਸਦੀਕ ਕੋਡ ਭੇਜਿਆ ਗਿਆ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਕੀਪੈਡ ਰਾਹੀਂ ਕੋਡ ਦਾਖਲ ਕਰੋ। ਸੁਰੱਖਿਆ ਲਈ ਮੈਂ ਇਸਨੂੰ ਦੁਬਾਰਾ ਨਹੀਂ ਦੱਸ ਸਕਦਾ।",
+    "verification_success": "ਧੰਨਵਾਦ। ਤੁਹਾਡੀ ਪਛਾਣ ਤਸਦੀਕ ਹੋ ਗਈ ਹੈ।",
+    "claims_one_confirm": "ਤੁਹਾਡਾ ਇੱਕ ਖੁੱਲ੍ਹਾ ਦਾਅਵਾ ਹੈ, {claim_id}, {scheme} ਅਧੀਨ। ਕੀ ਤੁਸੀਂ ਇਸਦੀ ਸਥਿਤੀ ਜਾਣਨਾ ਚਾਹੁੰਦੇ ਹੋ?",
+    "claims_many_intro": "ਤੁਹਾਡੇ {count} ਖੁੱਲ੍ਹੇ ਦਾਅਵੇ ਹਨ। ਤਾਜ਼ਾ ਤਿੰਨ: {list}. ਕਿਸ ਦਾਅਵੇ ਬਾਰੇ ਜਾਣਨਾ ਹੈ?",
+    "claim_stage_answer": "ਤੁਹਾਡਾ ਦਾਅਵਾ {claim_id} ਇਸ ਸਮੇਂ {stage} ਪੜਾਅ 'ਤੇ ਹੈ।",
+    "claim_query_note": "ਕਿਰਪਾ ਕਰਕੇ ਧਿਆਨ ਦਿਓ: {query_stage} ਵੱਲੋਂ ਇੱਕ ਖੁੱਲ੍ਹਾ ਸਵਾਲ ਹੈ। ਸਵਾਲ ਹੈ: {query_text}. ਜਵਾਬ ਦੇਣ ਲਈ ਐੱਲਟੀਈਟੀ ਪੋਰਟਲ ਵੇਖੋ।",
+    "pay_credited": "ਭੁਗਤਾਨ ਜਮ੍ਹਾਂ ਹੋ ਗਿਆ ਹੈ। {amount} ਰਕਮ {credit_date} ਨੂੰ ਜਮ੍ਹਾਂ ਹੋਈ। ਬੈਂਕ ਹਵਾਲਾ {bank_reference} ਹੈ।",
+    "pay_pending": "ਵਿੱਤ ਵਿਭਾਗ ਨੇ {approval_date} ਨੂੰ ਤੁਹਾਡਾ ਦਾਅਵਾ ਮਨਜ਼ੂਰ ਕੀਤਾ। ਭੁਗਤਾਨ {owner} ਟੀਮ ਕੋਲ ਬਾਕੀ ਹੈ। ਭੁਗਤਾਨ ਦੀ ਤਾਰੀਖ਼ ਹਾਲੇ ਉਪਲਬਧ ਨਹੀਂ।",
+    "more_help": "ਹੋਰ ਕੁਝ ਮਦਦ ਕਰਾਂ? ਤੁਸੀਂ ਕਿਸੇ ਹੋਰ ਦਾਅਵੇ ਬਾਰੇ ਪੁੱਛ ਸਕਦੇ ਹੋ।",
+    "human_transfer": "ਮੈਂ ਤੁਹਾਨੂੰ ਮਨੁੱਖੀ ਹੈਲਪਡੈਸਕ ਨਾਲ ਜੋੜ ਰਿਹਾ ਹਾਂ। ਕਿਰਪਾ ਕਰਕੇ ਲਾਈਨ 'ਤੇ ਰਹੋ।",
+    "unclear_retry": "ਮਾਫ਼ ਕਰਨਾ, ਸਮਝ ਨਹੀਂ ਆਇਆ। ਕੀ ਤੁਸੀਂ ਦੁਬਾਰਾ ਦੱਸੋਗੇ?",
+    "final_goodbye": "ਐੱਲਟੀਈਟੀ ਕਰਮਚਾਰੀ ਟਰੱਸਟ ਪੋਰਟਲ ਹੈਲਪਲਾਈਨ ਨੂੰ ਕਾਲ ਕਰਨ ਲਈ ਧੰਨਵਾਦ। ਅਲਵਿਦਾ।"
+  }
+}
