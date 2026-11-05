@@ -70,13 +70,18 @@ Or in one step: `npm run demo` (reset + start).
 | `pms1`, `pms2` | PMS Processor | PMS-stage alerts, claim context in stage |
 | `spm1` | SPM | Sub-panel Review queue |
 | `apm1` | APM | Apex Panel Review + Approval queue |
-| `admin1` | Administrator | Everything incl. administration + demo tools |
+| `admin1` | Administrator | Everything incl. administration + workspace tools |
 | `auditor1` | Auditor | Read-only incl. transcripts (FR-36) |
 
 Sign in, open **Call Simulator**, press a caller preset (e.g. *Credited payment
-(Vikram)*), confirm the masked PS No., read the OTP from the **DEMO MOCK SMS INBOX**
-panel, enter it on the keypad, and ask *"what is my payment status"*.
+(Vikram)*), confirm the masked PS No., read the OTP from the **Secure Message
+Inbox** panel, enter it on the keypad, and ask *"what is my payment status"*.
 [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) has the full 10–15 minute team walkthrough.
+
+**Handing the demo to someone (or another AI tool):** share
+[`AI_DEMO_RUNBOOK.txt`](AI_DEMO_RUNBOOK.txt) — a self-contained handoff with
+context, exact run steps, health checks, the full walkthrough script, API
+fallback commands, troubleshooting and presenter guardrails.
 
 ## Commands
 
