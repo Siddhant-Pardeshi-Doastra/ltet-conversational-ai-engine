@@ -1,0 +1,253 @@
+================================================================================
+ LTET CONVERSATIONAL AI ENGINE - AI RUN & DEMO HANDOFF (v1.0.0)
+ Give this file to any AI assistant/tool. It contains everything needed to
+ run the platform and present the team demo end to end.
+================================================================================
+
+--------------------------------------------------------------------------------
+1. MISSION
+--------------------------------------------------------------------------------
+You are operating the LTET Conversational AI Engine - a voice-assistant platform
+for an Employee Trust Portal that answers VERIFIED claim-status, payment and
+listed-beneficiary enquiries, then produces auditable post-call records.
+
+Your job:
+  a) Start the platform locally.
+  b) Verify it is healthy.
+  c) Present the guided team demo (section 6) - either by driving the web UI or
+     the HTTP API (both scripts included).
+  d) Close with the talking points (section 7).
+
+Do not modify source code. Do not claim production carrier/identity integration.
+Everything runs on a locally managed workspace dataset - say so once, proudly,
+as "the platform ships with its own managed dataset for demonstrations".
+
+--------------------------------------------------------------------------------
+2. PROJECT CONTEXT (60-second brief)
+--------------------------------------------------------------------------------
+- Product: Automated helpline assistant for employees of an enterprise trust
+  portal. Use cases:
+    UC-01 Claim status  (17 schemes, 4 processing stages, open processor queries)
+    UC-02 Payment info  (credited / processed / pending / failed / held)
+    UC-03 Listed beneficiaries (least-privilege, verified-binding model)
+- Stack: Node.js 22+ (built-in node:sqlite - no native modules), Express,
+  SQLite (WAL), no-build vanilla-JS web console. Zero paid API keys required.
+- Engine: deterministic state machine. Every spoken fact is fetched live from
+  the data service and validated against a fresh snapshot before being spoken.
+  Nothing is invented; nothing unverified is disclosed.
+- Security: OTP verification to the registered channel (keypad entry, hashed
+  storage, replay-safe), role-based access, immutable call logs, full audit
+  trail. Callers who only "know a PS number" are denied.
+- Post-call: durable outbox worker creates the immutable call log, claim-linked
+  document history, structured English summary, processor alerts, analytics.
+- 12 languages configured (English + 11 Indic); Hindi/English code-switching
+  works in the demo.
+
+--------------------------------------------------------------------------------
+3. PREREQUISITES
+--------------------------------------------------------------------------------
+- Node.js >= 22.13  (check: node --version)
+- A modern browser (Chrome/Edge) for the web console.
+- No database server, no API keys, no internet requirement.
+
+--------------------------------------------------------------------------------
+4. RUN STEPS (exact commands)
+--------------------------------------------------------------------------------
+Project root = the folder containing this file (package.json is here).
+
+  cd <project-root>
+  npm install          # first time only (pure-JS deps, ~5s)
+  npm run seed         # create the workspace dataset (idempotent; adds --force
+                       # via: node server/seed.js --force  to rebuild from zero)
+  npm start            # starts engine + web console + background worker
+
+Expected startup output:
+  LTET Conversational AI Engine v1.0.0 - Trust Portal Console
+    mode:     WORKSPACE  - workspace dataset
+    database: workspace fixtures ready (17 schemes, 14 members, 24 claims)
+    url:      http://127.0.0.1:8787
+
+Then open:  http://127.0.0.1:8787
+
+Health checks (confirm before presenting):
+  curl http://127.0.0.1:8787/api/health
+      -> {"ok":true,"mode":"demo", ...}
+  curl http://127.0.0.1:8787/api/readiness
+      -> {"ready":true, ...,"languages":{"configured":12,...}}
+
+If port 8787 is busy:  set PORT=9090 (or LTET_PORT) and use that URL instead:
+  Windows (cmd):   set PORT=9090 && npm start
+  Windows (PS):    $env:PORT=9090; npm start
+  Linux/macOS:     PORT=9090 npm start
+
+Workspace accounts (password for all: Demo#Pass1)
+  pms1 (PMS queue) | pms2 | spm1 (Sub-panel queue) | apm1 (Apex/Approval queue)
+  admin1 (everything) | auditor1 (read-only + transcripts)
+Sign in as admin1 for the demo.
+
+Reset between demos (optional):
+  UI: Scenarios & Health -> "Reset workspace data" (as admin1)
+  CLI: node server/seed.js --force   (then restart)
+
+--------------------------------------------------------------------------------
+5. WHAT THE TEAM WILL SEE
+--------------------------------------------------------------------------------
+Web console (8 screens): Overview (animated operations dashboard), Call
+Simulator (drives the real engine: identity -> OTP -> claim selection ->
+validated answers), Calls (immutable logs + summaries), Work Queue (processor
+alerts + callbacks), Claim Context (read-only claim facts + history timeline),
+Analytics (drivers, containment, payment mix, reports), Administration
+(versioned policy: draft -> approve -> publish -> rollback), Scenarios &
+Health (reproducible scenario suite + platform status).
+
+The Call Simulator includes a "Secure Message Inbox" panel - the ONLY place a
+verification code is ever displayed (it simulates the verified user's device).
+Codes never appear in transcripts, logs, or analytics.
+
+--------------------------------------------------------------------------------
+6. DEMO SCRIPT (10-15 minutes, follow in order)
+--------------------------------------------------------------------------------
+Sign in as admin1 / Demo#Pass1.
+
+STEP 1 - Verified employee enquiry (credited payment)      [3 min]
+  Screen: Call Simulator
+  - Click preset "Credited payment (Vikram)" -> "Start call".
+    Engine: greeting + AI/recording notice + language line.
+  - Type:  yes                       -> "I found an employee record linked to
+                                        this number, ending 0077. Is this you?"
+  - Type:  yes                       -> OTP sent to the registered contact.
+  - Read the 6-digit code from the "Secure Message Inbox" panel; type each digit
+    on the on-screen keypad, then press "Enter".
+    -> "Thank you. Your identity is verified."
+  - Type:  what is my payment status
+    -> Approval stated FIRST, then: "The payment has been credited. An amount of
+       Rs 24,500.00 was credited on <date>. The bank reference is MOCKBANK0045678."
+  - Type:  no                        -> polite goodbye.
+  Talking point: every spoken figure came from the data service and was
+  re-validated against a fresh snapshot before being spoken.
+
+STEP 2 - Processing stage + open processor query           [1 min]
+  - Preset "Linked employee (Priya, query claim)" -> Start call -> yes -> yes ->
+    keypad OTP -> type: claim status
+    -> stage "PMS Processor" + the open query text + "visit the LTET portal".
+
+STEP 3 - Failed / delayed payment -> processor alert        [2 min]
+  - Scenarios & Health -> enable drill "finance delay boundary" (delay_payment)
+    OR use caller number +91 55555 50006 (failed payment with recorded reason).
+  - Run a verified call like Step 1 and ask for payment status.
+    -> failed/held: recorded reason spoken, escalation offered.
+  - Open Work Queue: the payment_failed / payment_delayed alert sits in the PMS
+    queue. Acknowledge it, then Close it. Refresh - state persists.
+  - Disable the drill afterwards.
+
+STEP 4 - Legitimate scoped beneficiary                      [2 min]
+  - Preset "Legit beneficiary (Meera, granted)" -> Start call.
+  - Type:  I am calling as a beneficiary
+  - Keypad: employee PS 010077 -> Enter -> type: yes -> keypad OTP.
+  - Ask:  payment status
+    -> ONLY the granted claim (CLM-10020) is visible, only granted fields.
+
+STEP 5 - Impostor denied (the manager's question)           [1 min]
+  - Preset "Impostor beneficiary (no binding)" -> Start call.
+  - Type:  I am the beneficiary
+  - Keypad: 004321 -> Enter
+    -> Generic fail-closed message. No names, no claims. A denial alert is
+       recorded. Knowing the PS number is not identity.
+
+STEP 6 - Outage handling -> callback                        [1 min]
+  - Enable drill "finance_outage" -> verify Vikram like Step 1 -> ask payment.
+    -> Truthful "service is not responding" message, NO cached figures,
+       callback offered. Type: callback  -> request created.
+  - Disable the drill.
+
+STEP 7 - Durable records                                    [2 min]
+  - Screen Calls -> click the newest log.
+    Summary tab: structured English summary, verified identity, facts given.
+    Transcript tab (role-restricted), History & notes tab, Answer evidence tab
+    (source version + retrieval time for every spoken fact).
+
+STEP 8 - Governance + analytics                             [2 min]
+  - Administration: policy version history; create a draft (change
+    claims_per_call_limit), Save -> Approve -> Publish -> Rollback to v1.
+  - Analytics: containment, drivers, payment mix, "Generate daily report".
+  - Close: platform status screen -> explain the go-live checklist
+    (carrier + enterprise APIs + language sign-off) from docs/OPEN_DECISIONS.md.
+
+Hindi moment (optional, impressive): at any prompt type
+  "mera CLM-10020 ka payment status kya hai"
+  -> code-switching detected, claim ID captured, answer continues in Hindi.
+
+--------------------------------------------------------------------------------
+7. CLOSING TALKING POINTS
+--------------------------------------------------------------------------------
+- Deterministic engine, not a chatbot: a state machine with validated factual
+  templates - the model layer can never invent amounts, dates or statuses.
+- Security by design: caller-ID match or knowing a PS number never grants
+  access; OTP goes only to the registered channel; beneficiary access requires
+  a previously verified binding plus an explicit scoped grant.
+- Enterprise auditability: immutable logs, answer evidence with source versions,
+  audited admin actions, governed configuration with rollback.
+- Production posture: readiness gates fail closed; signed carrier webhooks;
+  bounded retries with dead-letter recovery; rate limiting.
+- Roadmap to go-live: connect enterprise identity/claims/Finance APIs, carrier
+  provisioning, native-speaker language sign-off (tracked in
+  docs/OPEN_DECISIONS.md).
+
+--------------------------------------------------------------------------------
+8. API FALLBACK (if no browser is available - drive the engine directly)
+--------------------------------------------------------------------------------
+Login (save cookie from Set-Cookie):
+  curl -i -X POST http://127.0.0.1:8787/api/auth/login ^
+       -H "Content-Type: application/json" ^
+       -d "{\"username\":\"admin1\",\"password\":\"Demo#Pass1\"}"
+
+Start call (cookie in header):
+  curl -X POST http://127.0.0.1:8787/api/calls -H "Content-Type: application/json" ^
+       -H "Cookie: <cookie>" -d "{\"caller_number\":\"+91 55555 50003\"}"
+  -> note session id from the JSON.
+
+Confirm identity twice:
+  curl -X POST http://127.0.0.1:8787/api/calls/<SID>/events ... -d "{\"type\":\"utterance\",\"text\":\"yes\"}"   (x2)
+
+Read OTP (workspace verification inbox):
+  curl ".../api/demo/inbox?session_id=<SID>" -> parse "code is <6 digits>"
+
+Submit code via keypad, then ask payment:
+  ... -d "{\"type\":\"keypad\",\"digits\":\"<code>\"}"
+  ... -d "{\"type\":\"utterance\",\"text\":\"what is my payment status\"}"
+
+Hang up:  ... -d "{\"type\":\"hangup\",\"expected\":true}"
+Records:  curl ".../api/calls/<SID>/log"   (summary, history, evidence)
+
+--------------------------------------------------------------------------------
+9. TROUBLESHOOTING
+--------------------------------------------------------------------------------
+- Port busy              -> run on another PORT (section 4).
+- "session_ended" (409)  -> the call finished; start a new call.
+- OTP missing in inbox   -> you skipped a confirmation step; restart the call.
+- Wrong OTP 3 times      -> lockout (by design). Reset data or start a new call.
+- Blank charts           -> complete a call first; analytics derive from records.
+- No speech audio        -> the platform speaks via the browser; tick "Speak
+                            replies (browser TTS)". Typed input always works.
+- Want a clean slate     -> node server/seed.js --force, restart, sign in again.
+
+--------------------------------------------------------------------------------
+10. GUARDRAILS FOR THE PRESENTER (AI OR HUMAN)
+--------------------------------------------------------------------------------
+- Present it as "Release 1.0 running on its managed workspace dataset".
+- Do not claim live carrier/enterprise-API connectivity; the platform status
+  screen intentionally shows what is built-in vs operator-managed.
+- Never say the engine "uses AI to decide answers" - facts are fetched and
+  validated; the conversation is a deterministic, auditable machine.
+- Do not edit claim/payment data through the UI: the platform is read-only on
+  claim facts by design (that is a selling point - say it).
+
+--------------------------------------------------------------------------------
+REFERENCES IN THE REPO
+  README.md .................. overview + commands
+  docs/DEMO_GUIDE.md ......... this walkthrough in web form
+  docs/TEAM_OVERVIEW.md ...... slide-ready summary
+  docs/SECURITY_DECISIONS.md . security model and corrections
+  docs/OPEN_DECISIONS.md ..... go-live decision register
+  contracts/openapi.yaml ..... proposed API contract
+================================================================================
