@@ -1,6 +1,22 @@
 // Engine unit tests: intent parsing, language detection, fact validation.
+// Self-seeding: portal-backed assertions need fixtures, so this process creates
+// its own isolated, freshly seeded DB before any server import.
+import { randomUUID } from 'node:crypto';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+
+process.env.LTET_MODE = 'demo';
+process.env.LTET_DB_FILE = join(tmpdir(), `ltet-engine-test-${randomUUID()}.db`);
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+const { getDb } = await import('../server/db.js');
+const { seed } = await import('../server/seed.js');
+const { seedDefaultPolicy } = await import('../server/services/policy.js');
+getDb();
+seed({ force: true });
+seedDefaultPolicy();
 
 const { parseUtterance, detectLanguage } = await import('../server/engine/intents.js');
 
