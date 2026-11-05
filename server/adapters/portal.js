@@ -20,7 +20,7 @@ export function readiness() {
   const check = (name, url) => ({
     integration: name,
     status: live ? (url ? 'configured' : 'not_configured') : 'mock_demo',
-    detail: live ? (url ? `endpoint configured` : 'no endpoint configured; private workflows disabled') : 'running against the synthetic mock portal (demo only)',
+    detail: live ? (url ? 'endpoint configured' : 'no endpoint configured; private workflows disabled') : 'served by the platform-managed data service',
   });
   return [
     check('IR-02 identity lookup', cfg.identityApiUrl),

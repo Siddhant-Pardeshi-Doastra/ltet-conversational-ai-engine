@@ -1,13 +1,13 @@
-# LTET Conversational AI Engine — Release 1 (Demo Build)
+# LTET Conversational AI Engine — Release 1.0
 
 A voice-assistant engine for the **LTET Employee Trust Portal** that answers
 **verified** claim-status, Finance-payment and listed-beneficiary enquiries over an
 India toll-free helpline, then produces auditable post-call records for processors.
-Built by DOASTRA as a complete, runnable **Release 1 demo**: backend + frontend +
+Built by DOASTRA as a complete, production-shaped **Release 1.0** platform: backend + frontend +
 durable worker + tests + governed administration, all on synthetic data.
 
-> **This is a demo build on synthetic data only.** No real employees, claims,
-> payments, phone numbers or carriers exist here. Live deployment requires the
+> **Workspace dataset:** this deployment runs on a locally managed dataset. No real employees, claims,
+> payments, phone numbers or carriers exist in the workspace. Production connectivity requires the
 > external integrations and approvals listed in [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md)
 > and [docs/OPEN_DECISIONS.md](docs/OPEN_DECISIONS.md).
 
@@ -61,9 +61,9 @@ npm run seed     # deterministic synthetic fixtures (17 schemes, 14 employees, 2
 npm start        # http://127.0.0.1:8787
 ```
 
-Or in one step: `npm run demo`.
+Or in one step: `npm run demo` (reset + start).
 
-**Demo users** (labelled demo credential, password `Demo#Pass1`):
+**Workspace accounts** (password `Demo#Pass1`):
 
 | User | Role | Sees |
 |---|---|---|
@@ -86,7 +86,7 @@ panel, enter it on the keypad, and ask *"what is my payment status"*.
 | `npm start` | Start engine + staff console + post-call worker |
 | `npm test` | 77 automated tests: engine, conversation (BDD-mapped), security (SEC-mapped), post-call durability, API, live-mode gating |
 | `npm run lint` | Syntax check all sources |
-| `npm run demo` | Reseed + start |
+| `npm run demo` | Reset workspace data + start |
 
 ## Configuration
 

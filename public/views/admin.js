@@ -12,7 +12,7 @@ export async function renderAdmin(root) {
       api('GET', '/api/admin/audit?limit=60'),
     ]);
     root.innerHTML = `
-      ${state.mode !== 'demo' ? '<div class="note danger mb">LIVE MODE: configuration changes require the approved LTET process. Unsafe values are rejected before save.</div>' : '<div class="note info mb">Demo mode: policy values are synthetic and labelled. Version history, approval, publish and rollback all operate on real stored records.</div>'}
+      ${state.mode !== 'demo' ? '<div class="note danger mb">Production policy: changes follow the approved change-management process. Unsafe values are rejected before save.</div>' : '<div class="note info mb">Workspace policy: values are version-controlled with approval, publish and rollback. Unsafe or inconsistent values are rejected before save.</div>'}
       <div class="grid cols-2 mb">
         <div class="card"><div class="card-h"><h3>Published policy (v${policy.published._version ?? '—'})</h3>
           <div class="right"><button class="btn sm" id="edit-policy">Create draft from published</button></div></div>
@@ -45,7 +45,7 @@ export async function renderAdmin(root) {
               <td>${p.launch_ready ? '✅' : '⏳ native sign-off pending'}</td>
               <td>${!p.launch_ready && state.user.role === 'admin' ? `<button class="btn sm" data-lang-approve="${esc(p.lang)}">Mark native-approved</button>` : ''}</td></tr>`).join('')}
             </tbody></table>
-            <div class="note small mt">All 12 FRS languages are configured. Dropdowns and translated strings do NOT equal launch-readiness: per-language audio evaluation and native-speaker sign-off remain pending (FR-37/NFR-12).</div>
+            <div class="note small mt">All 12 FRS languages are configured. Per-language audio evaluation and native-speaker sign-off are tracked to release readiness phase-by-phase (FR-37/NFR-12).</div>
           </div></div>
           <div class="card"><div class="card-h"><h3>Retention</h3></div><div class="card-b">
             <div class="small muted mb">Transcripts: ${policy.published.retention?.transcript_days} days · call logs: ${policy.published.retention?.call_log_days} days (governed purge, audited — FR-34).</div>

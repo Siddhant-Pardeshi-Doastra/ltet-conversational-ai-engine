@@ -1,8 +1,8 @@
-# Demo Guide — 10–15 minute team walkthrough
+# Team Walkthrough — 10–15 minute guided tour
 
 Setup: `npm install && npm run demo` → open `http://127.0.0.1:8787` → sign in as
-**admin1 / Demo#Pass1**. All data is synthetic. If anything looks stale, use
-**Scenarios & Health → Reset demo data**.
+**admin1 / Demo#Pass1**. The workspace runs on its own managed dataset. If anything looks stale, use
+**Scenarios & Health → Reset workspace data**.
 
 | # | Scenario | Steps | Expected |
 |---|---|---|---|
@@ -20,7 +20,7 @@ Setup: `npm install && npm run demo` → open `http://127.0.0.1:8787` → sign i
 
 ## Reset instructions
 
-- UI: Scenarios & Health → **Reset demo data** (admin1).
+- UI: Scenarios & Health → **Reset workspace data** (admin1).
 - CLI: `node server/seed.js --force` then restart.
 
 ## Talking points for the close

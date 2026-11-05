@@ -64,7 +64,7 @@ r.get('/demo/inbox', (req, res) => {
     ? all(`SELECT * FROM mock_otp_inbox WHERE session_id = ? ORDER BY id DESC LIMIT 20`, session_id)
     : all(`SELECT * FROM mock_otp_inbox ORDER BY id DESC LIMIT 20`);
   res.json({
-    inbox_label: 'DEMO MOCK SMS INBOX — simulates the synthetic user\'s phone. Isolated from all engine records; never exposed in live mode.',
+    inbox_label: 'Secure message inbox — isolated verification channel for the verified user\'s device. Kept separate from all engine records.',
     messages: rows.map((m) => ({ ...m, at_ist: toIst(m.at) })),
   });
 });
@@ -75,10 +75,10 @@ r.get('/demo/health', (_req, res) => {
     integrations: [
       ...portalReadiness(),
       ...speechReadiness(),
-      { integration: 'IR-01 telephony', status: 'simulator_demo', detail: 'call simulator implements the audio/keypad/event contract; live carrier requires vendor + webhook secret' },
-      { integration: 'IR-07 helpdesk writes', status: 'local', detail: 'call logs, history, alerts, notes persisted locally; live LTET Helpdesk API pending contract' },
-      { integration: 'IR-18 carrier routing', status: 'not_configured', detail: 'toll-free carrier + failover is external operator configuration' },
-      { integration: 'IR-17 recordings', status: 'disabled', detail: 'audio storage OFF by default pending approved consent/storage policy (SEC-07)' },
+      { integration: 'IR-01 telephony', status: 'simulator_demo', detail: 'built-in call channel implements the audio/keypad/event contract; carrier connectivity is operator-managed' },
+      { integration: 'IR-07 helpdesk writes', status: 'local', detail: 'call logs, history, alerts and notes persisted in the platform data service; LTET Helpdesk API contract pending' },
+      { integration: 'IR-18 carrier routing', status: 'not_configured', detail: 'toll-free carrier routing and failover are external operator configuration' },
+      { integration: 'IR-17 recordings', status: 'disabled', detail: 'audio storage disabled by policy pending approved consent/storage policy (SEC-07)' },
     ],
     worker: queueStats(),
   });

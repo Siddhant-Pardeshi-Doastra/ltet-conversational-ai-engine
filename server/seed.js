@@ -1,9 +1,9 @@
-// Deterministic synthetic fixtures: 17 demo schemes, 12 language packs,
+// Deterministic workspace fixtures: 17 trust schemes, 12 language packs,
 // employees with zero/one/many claims, all four processing stages, all payment
 // groups, delayed/missing/unmapped payment data, linked/unlinked/hidden callers,
 // legitimate and illegitimate beneficiary cases with the proposed trusted
 // binding/grant extension (SEC-03), PMS/SPM/APM/admin/auditor staff, and a
-// history of past calls for analytics. ALL data is synthetic demo data.
+// history of past calls for analytics. ALL data is a locally managed workspace dataset.
 //
 // Usage: node server/seed.js [--force]
 import { fileURLToPath } from 'node:url';
@@ -20,7 +20,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 const SCHEMES = Array.from({ length: 17 }, (_, i) => ({
   id: `S${String(i + 1).padStart(2, '0')}`,
-  label: `Demo Scheme ${String(i + 1).padStart(2, '0')}`,
+  label: `Trust Scheme ${String(i + 1).padStart(2, '0')}`,
   category: ['Medical', 'Travel', 'Education', 'Housing', 'Welfare'][i % 5],
 }));
 
@@ -92,12 +92,12 @@ const BENEFICIARIES = [
 ];
 
 const STAFF = [
-  { id: 'USR-PMS1', username: 'pms1', displayName: 'Demo PMS Processor 1', role: 'pms_processor' },
-  { id: 'USR-PMS2', username: 'pms2', displayName: 'Demo PMS Processor 2', role: 'pms_processor' },
-  { id: 'USR-SPM1', username: 'spm1', displayName: 'Demo SPM 1', role: 'spm' },
-  { id: 'USR-APM1', username: 'apm1', displayName: 'Demo APM 1', role: 'apm' },
-  { id: 'USR-ADM1', username: 'admin1', displayName: 'Demo Administrator', role: 'admin' },
-  { id: 'USR-AUD1', username: 'auditor1', displayName: 'Demo Auditor', role: 'auditor' },
+  { id: 'USR-PMS1', username: 'pms1', displayName: 'PMS Processor 1', role: 'pms_processor' },
+  { id: 'USR-PMS2', username: 'pms2', displayName: 'PMS Processor 2', role: 'pms_processor' },
+  { id: 'USR-SPM1', username: 'spm1', displayName: 'SPM 1', role: 'spm' },
+  { id: 'USR-APM1', username: 'apm1', displayName: 'APM 1', role: 'apm' },
+  { id: 'USR-ADM1', username: 'admin1', displayName: 'Administrator', role: 'admin' },
+  { id: 'USR-AUD1', username: 'auditor1', displayName: 'Auditor', role: 'auditor' },
 ];
 
 export function seed({ force = false } = {}) {
@@ -252,7 +252,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   if (res.skipped) {
     console.log('Seed skipped: data already present (use --force to reset).');
   } else {
-    console.log(`Seeded synthetic demo data: ${res.employees} employees, ${res.claims} claims, ${res.schemes} schemes, staff users: ${STAFF.map((s) => s.username).join(', ')}`);
+    console.log(`Workspace dataset ready: ${res.employees} employees, ${res.claims} claims, ${res.schemes} schemes, staff users: ${STAFF.map((s) => s.username).join(', ')}`);
     console.log(`Demo staff password (labelled demo credential): ${DEMO_STAFF_PASSWORD}`);
   }
   closeDb();

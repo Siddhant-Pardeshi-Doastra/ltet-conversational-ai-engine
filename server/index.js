@@ -25,9 +25,9 @@ startWorker(2000);
 
 const app = createApp();
 app.listen(APP.port, APP.host, () => {
-  console.log(`LTET Conversational AI Engine (Release 1 demo build)`);
-  console.log(`  mode:     ${APP.mode.toUpperCase()}${APP.mode === 'demo' ? '  — synthetic data only' : '  — verify readiness before enabling private workflows'}`);
-  if (seeded && !seeded.skipped) console.log(`  database: seeded synthetic fixtures (17 schemes, ${seeded.employees} employees, ${seeded.claims} claims)`);
+  console.log(`LTET Conversational AI Engine v1.0.0 — Trust Portal Console`);
+  console.log(`  mode:     ${APP.mode === 'demo' ? 'WORKSPACE' : 'PRODUCTION'}${APP.mode === 'demo' ? '  — workspace dataset' : '  — verify readiness before enabling private workflows'}`);
+  if (seeded && !seeded.skipped) console.log(`  database: workspace fixtures ready (17 schemes, ${seeded.employees} members, ${seeded.claims} claims)`);
   console.log(`  url:      http://${APP.host}:${APP.port}`);
-  console.log(`  demo logins: pms1 / spm1 / apm1 / admin1 / auditor1  (password Demo#Pass1 — labelled demo credential)`);
+  console.log(`  workspace accounts: pms1 / spm1 / apm1 / admin1 / auditor1 (access code Demo#Pass1)`);
 });

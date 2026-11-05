@@ -8,7 +8,7 @@ focus work; answers depend on current portal data and must be auditable.
 
 ## What we built
 
-**LTET Conversational AI Engine — Release 1**, a complete working demo by DOASTRA:
+**LTET Conversational AI Engine — Release 1.0**, a complete working platform by DOASTRA:
 
 - An **automated helpline assistant** that answers *verified* enquiries for
   claim status (UC-01), Finance payment information (UC-02) and listed

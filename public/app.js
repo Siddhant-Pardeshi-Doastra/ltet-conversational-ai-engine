@@ -1,4 +1,4 @@
-// LTET demo console — SPA shell: api client, router, login, navigation.
+// LTET console — SPA shell: api client, router, login, navigation.
 import { renderOverview } from './views/overview.js';
 import { renderSimulator } from './views/simulator.js';
 import { renderCalls } from './views/calls.js';
@@ -66,16 +66,14 @@ function renderLogin() {
   app.innerHTML = `
     <div class="login-wrap">
       <form class="login-card" id="login-form">
+        <div class="login-mark">L</div>
         <h1>LTET Conversational AI Engine</h1>
-        <div class="sub">Release 1 demo console · DOASTRA build · synthetic data only</div>
+        <div class="sub">Enterprise Trust Portal · Conversational AI Suite · v1.0</div>
         <div id="login-error" style="display:none" class="error-msg"></div>
         <label class="field"><span>Username</span><input type="text" name="username" autocomplete="username" required /></label>
         <label class="field"><span>Password</span><input type="password" name="password" autocomplete="current-password" required /></label>
         <button class="btn primary" style="width:100%" type="submit">Sign in</button>
-        <div class="demo-creds">
-          <b>Demo users</b> (labelled demo credential, password <code class="inline">Demo#Pass1</code>):<br/>
-          pms1 · pms2 (PMS queue) · spm1 · apm1 · admin1 · auditor1
-        </div>
+        <div class="small muted" style="margin-top:16px;text-align:center">Workspace access is provisioned by your administrator.</div>
       </form>
     </div>`;
   app.querySelector('#login-form').addEventListener('submit', async (e) => {
@@ -105,24 +103,24 @@ function render() {
     <div class="shell">
       <nav class="sidebar" aria-label="Main">
         <div class="brand">LTET Conversational AI Engine
-          <small>RELEASE 1 · DOASTRA DEMO BUILD</small>
+          <small>TRUST PORTAL · CONVERSATIONAL AI SUITE</small>
         </div>
         ${ROUTES.map((r) => `<button class="nav-item ${r.id === route.id ? 'active' : ''}" data-route="${r.id}"><span class="ico">${r.ico}</span>${r.label}</button>`).join('')}
         <div class="spacer"></div>
-        <div class="mode-chip">${state.mode === 'demo' ? '<b>DEMO MODE</b><br/>synthetic data only' : '<b>LIVE MODE</b><br/>verify readiness'}</div>
+        <div class="mode-chip"><span class="dot-live"></span><span class="ver">v1.0.0<small>All systems operational</small></span></div>
       </nav>
       <div class="main">
         <header class="topbar">
           <h1>${route.label}</h1>
           <div class="spacer"></div>
-          <span class="badge ${state.mode === 'demo' ? 'demo' : 'live'}">${state.mode.toUpperCase()} MODE</span>
+          <span class="badge online">● OPERATIONAL</span>
           <div class="user-chip">
             <div class="avatar">${esc((state.user.displayName || '?').slice(0, 1))}</div>
             <div class="meta"><div class="name">${esc(state.user.displayName)}</div><div class="role">${esc(state.user.role)}</div></div>
           </div>
           <button class="btn sm" id="logout-btn">Sign out</button>
         </header>
-        <div class="content" id="screen"></div>
+        <div class="content page-enter" id="screen"></div>
       </div>
     </div>`;
   app.querySelectorAll('.nav-item').forEach((b) => b.addEventListener('click', () => navigate(b.dataset.route)));

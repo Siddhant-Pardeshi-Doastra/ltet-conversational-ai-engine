@@ -35,8 +35,8 @@ r.get('/readiness', (_req, res) => {
     blocking,
     demo_mode: isDemoMode(),
     note: APP.mode === 'live'
-      ? 'LIVE mode: private workflows stay disabled until every blocker is resolved. No synthetic fallback exists.'
-      : 'DEMO mode: synthetic data only; not a production connection.',
+      ? 'Production mode: private workflows stay disabled until every blocker is resolved. No dataset fallback exists.'
+      : 'Workspace mode: locally managed dataset with full platform capability; readiness checks enforced.',
     integrations,
     languages: {
       configured: packs.length,

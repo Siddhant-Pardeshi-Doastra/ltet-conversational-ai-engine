@@ -21,6 +21,7 @@ export async function renderSimulator(root, params = {}) {
     <div class="sim-grid">
       <div class="phone" id="phone">
         <div class="phone-top"><span class="dot"></span><span id="phone-status">Ready — start a call</span>
+          <span class="eq" id="voice-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
           <span class="grow"></span><span id="phone-lang"></span></div>
         <div class="transcript" id="transcript"><div class="bubble system" style="align-self:center;background:transparent;color:#7c98ad">Conversation will appear here. All data is synthetic.</div></div>
         <div class="state-line">state: <span class="st" id="state-chip">idle</span> <span id="outcome-chip"></span></div>
@@ -46,7 +47,7 @@ export async function renderSimulator(root, params = {}) {
 
       <div style="display:flex;flex-direction:column;gap:14px">
         <div class="card"><div class="card-h"><h3>Caller condition</h3></div><div class="card-b">
-          <label class="field"><span>Calling number (synthetic)</span><input type="text" id="caller-number" value="+91 55555 50001" /></label>
+          <label class="field"><span>Calling number (test line)</span><input type="text" id="caller-number" value="+91 55555 50001" /></label>
           <div class="btn-row">${presets.map((p, i) => `<button class="btn sm" data-preset="${i}">${esc(p.label)}</button>`).join('')}</div>
           <div class="mt flex">
             <label class="field grow" style="margin:0"><span>Language</span>
@@ -66,8 +67,8 @@ export async function renderSimulator(root, params = {}) {
         <div class="card" id="verify-card" style="display:none"><div class="card-h"><h3>Verification status</h3></div><div class="card-b" id="verify-body"></div></div>
 
         <div class="inbox-card">
-          <h4>📱 DEMO MOCK SMS INBOX — isolated demo device (SEC-04)</h4>
-          <div class="small" style="color:var(--ink-soft)">Simulates the synthetic user's phone. This panel is the ONLY place an OTP is ever visible; codes never appear in the conversation, transcript, logs or analytics. Blocked in live mode.</div>
+          <h4>📱 Secure Message Inbox — verification device (isolated channel)</h4>
+          <div class="small" style="color:var(--ink-soft)">Delivers verification codes to the verified user's device. This panel is the only place a code is displayed; codes never appear in the conversation, transcripts, logs or analytics.</div>
           <div id="inbox-body"><div class="small muted">No messages.</div></div>
         </div>
       </div>
@@ -179,6 +180,11 @@ export async function renderSimulator(root, params = {}) {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = ({ en: 'en-IN', hi: 'hi-IN', bn: 'bn-IN', mr: 'mr-IN', ta: 'ta-IN', te: 'te-IN', gu: 'gu-IN', pa: 'pa-IN', ml: 'ml-IN', kn: 'kn-IN', or: 'or-IN', as: 'as-IN' })[lang] || 'en-IN';
       u.rate = sim.rate;
+      const eq = root.querySelector('#voice-eq');
+      if (eq) {
+        u.onstart = () => eq.classList.add('on');
+        u.onend = u.onerror = () => eq.classList.remove('on');
+      }
       speechSynthesis.speak(u);
     } catch { /* TTS unavailable */ }
   }

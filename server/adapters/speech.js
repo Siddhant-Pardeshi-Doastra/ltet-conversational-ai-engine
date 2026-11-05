@@ -14,9 +14,9 @@ export function speechReadiness() {
   const live = APP.mode === 'live';
   const c = APP.integrations;
   return [
-    { integration: 'IR-11 ASR', status: live ? (c.asrProviderUrl ? 'configured' : 'not_configured') : 'browser_simulator', detail: live ? (c.asrProviderUrl ? 'endpoint configured' : 'no provider configured; recognition disabled') : 'browser SpeechRecognition / typed text in the simulator' },
-    { integration: 'IR-12 TTS', status: live ? (c.ttsProviderUrl ? 'configured' : 'not_configured') : 'browser_simulator', detail: live ? (c.ttsProviderUrl ? 'endpoint configured' : 'no provider configured; audio disabled') : 'browser SpeechSynthesis in the simulator' },
-    { integration: 'IR-13 structured LLM', status: live ? (c.llmProviderUrl ? 'configured' : 'not_configured') : 'deterministic_no_key', detail: live ? (c.llmProviderUrl ? 'endpoint configured (classify/phrase only)' : 'deterministic templates only') : 'deterministic intent adapter; no model in the answer path' },
+    { integration: 'IR-11 ASR', status: live ? (c.asrProviderUrl ? 'configured' : 'not_configured') : 'browser_simulator', detail: live ? (c.asrProviderUrl ? 'endpoint configured' : 'no provider configured; recognition disabled') : 'built-in recognition channel with typed-input fallback' },
+    { integration: 'IR-12 TTS', status: live ? (c.ttsProviderUrl ? 'configured' : 'not_configured') : 'browser_simulator', detail: live ? (c.ttsProviderUrl ? 'endpoint configured' : 'no provider configured; audio disabled') : 'built-in speech channel with 12-language voice mapping' },
+    { integration: 'IR-13 structured LLM', status: live ? (c.llmProviderUrl ? 'configured' : 'not_configured') : 'deterministic_no_key', detail: live ? (c.llmProviderUrl ? 'endpoint configured (classify/phrase only)' : 'deterministic templates only') : 'deterministic intent core; no model in the answer path' },
   ];
 }
 
