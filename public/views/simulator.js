@@ -64,7 +64,7 @@ export async function renderSimulator(root, params = {}) {
           <label class="field"><span>Calling number (test line)</span><input type="text" id="caller-number" value="+91 55555 50001" /></label>
           <div class="btn-row">${presets.map((p, i) => `<button class="btn sm" data-preset="${i}">${esc(p.label)}</button>`).join('')}</div>
           <div class="mt flex">
-            <label class="field grow" style="margin:0"><span>Language — <span id="lang-count"></span></span>
+            <label class="field grow" style="margin:0"><span>Language — <span id="lang-count"></span><br/><span class="small muted" id="voice-availability"></span></span>
               <select id="sim-lang">
                 <option value="auto">Auto-detect</option>
                 <optgroup label="Core catalogue">${coreOpts}</optgroup>
@@ -102,6 +102,13 @@ export async function renderSimulator(root, params = {}) {
   $('#lang-count').textContent = `${catalogue.frs_core.length + catalogue.extended.length} languages configured`;
 
   // Voice engine: load device voices, populate the picker for the current language.
+  const speakableCount = () => {
+    let n = 0;
+    for (const p of [...catalogue.frs_core, ...catalogue.extended]) {
+      if (voice.voicesFor(p.lang).length > 0) n += 1;
+    }
+    return n;
+  };
   const refreshVoicePicker = () => {
     const lang = sim.lang === 'auto' ? 'en' : sim.lang;
     const sel = $('#sim-voice');
@@ -111,6 +118,8 @@ export async function renderSimulator(root, params = {}) {
       list.slice(0, 8).map((v) => `<option value="${esc(v.voiceURI)}">${esc(v.name)}</option>`).join('');
     if (current) sel.value = current;
     const grade = $('#voice-grade');
+    const countEl = $('#voice-availability');
+    if (countEl) countEl.textContent = speakableCount() + ' of ' + (catalogue.frs_core.length + catalogue.extended.length) + ' speak audibly on this device — the rest run in live text';
     if (!voice.supported) { grade.textContent = 'text mode'; grade.className = 'pill muted'; }
     else if (voice.isHumanGrade(lang)) { grade.textContent = 'human-grade'; grade.className = 'pill ok'; }
     else { grade.textContent = 'device voice'; grade.className = 'pill info'; }
