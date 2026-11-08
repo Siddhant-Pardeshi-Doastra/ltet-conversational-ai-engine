@@ -35,6 +35,19 @@ test('detectLanguage across all 12 FRS language scripts', () => {
   assert.equal(detectLanguage('నా క్లెయిమ్ ఎక్కడ?'), 'te');
 });
 
+test('detectLanguage across the extended catalogue (scripts + keywords)', () => {
+  assert.equal(detectLanguage('میرا دعویٰ کہاں ہے؟'), 'ur', 'Urdu distinguished inside Arabic script');
+  assert.equal(detectLanguage('أين مطالبتي؟'), 'ar', 'Arabic script default');
+  assert.equal(detectLanguage('Где моё требование?'), 'ru', 'Cyrillic');
+  assert.equal(detectLanguage('私の請求はどこですか'), 'ja', 'Kana');
+  assert.equal(detectLanguage('我的申请在哪里'), 'zh', 'Han');
+  assert.equal(detectLanguage('¿cuál es el estado de mi pago?'), 'es', 'Spanish keyword');
+  assert.equal(detectLanguage('où est le paiement de ma demande'), 'fr', 'French keyword');
+  assert.equal(detectLanguage('meine Zahlung bitte'), 'de', 'German keyword');
+  assert.equal(detectLanguage('qual a situação do meu pagamento'), 'pt', 'Portuguese keyword');
+  assert.equal(detectLanguage('statusnya pembayaran klaim saya'), 'id', 'Indonesian keyword');
+});
+
 test('mixed Hindi-English code-switching is detected as Hindi with English terms intact (FR-21)', () => {
   const p = parseUtterance('mera CLM-10020 ka payment status kya hai');
   assert.equal(p.lang, 'hi');
@@ -96,18 +109,24 @@ test('unclear utterances are flagged for recognition-failure counting', () => {
 // ---- language packs -------------------------------------------------------
 const { allPacks, packMeta, t } = await import('../server/engine/languages.js');
 
-test('all 12 FRS language packs load with required metadata', () => {
+test('all 12 FRS-core packs + extended catalogue load with required metadata', () => {
   const packs = allPacks();
-  const expected = ['en', 'hi', 'bn', 'mr', 'ta', 'te', 'gu', 'pa', 'ml', 'kn', 'or', 'as'];
-  for (const l of expected) {
+  const core = ['en', 'hi', 'bn', 'mr', 'ta', 'te', 'gu', 'pa', 'ml', 'kn', 'or', 'as'];
+  for (const l of core) {
     assert.ok(packs[l], `pack ${l} missing`);
     assert.ok(packs[l].strings.greeting, `${l} greeting missing`);
     assert.ok(packs[l].locale, `${l} locale missing`);
   }
+  const extended = ['ur', 'es', 'fr', 'de', 'pt', 'ar', 'zh', 'ja', 'ru', 'id'];
+  for (const l of extended) {
+    assert.ok(packs[l], `extended pack ${l} missing`);
+    assert.equal(packs[l].catalogue, 'extended');
+  }
   const meta = packMeta();
-  assert.equal(meta.length, 12);
+  assert.equal(meta.length, 22);
+  assert.equal(meta.filter((m) => m.catalogue === 'frs-core').length, 12);
   assert.equal(meta.filter((m) => m.launch_ready).length, 1, 'only English is native-approved');
-  assert.equal(meta.filter((m) => m.status === 'draft_translation').length, 11);
+  assert.equal(meta.filter((m) => m.status === 'draft_translation').length, 21);
 });
 
 test('t() falls back to English for missing keys in draft packs', () => {

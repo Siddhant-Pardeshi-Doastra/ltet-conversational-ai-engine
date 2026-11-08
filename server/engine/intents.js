@@ -4,8 +4,6 @@
 // claim-ID capture (English claim/PS terminology per FR-21) and multilingual
 // yes/no. Output is structured only — it never creates identifiers, amounts,
 // dates, ownership or status, and never decides access.
-import { LANGUAGE_ORDER } from './languages.js';
-
 const SCRIPT_TESTS = [
   ['pa', /[\u0A00-\u0A7F]/],
   ['gu', /[\u0A80-\u0AFF]/],
@@ -74,12 +72,13 @@ function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Script-based language detection with code-switch awareness (FR-20/FR-21). */
+/** Script-based language detection with code-switch awareness (FR-20/FR-21)
+ *  plus the extended catalogue (Arabic/Urdu, Cyrillic, CJK, Latin-European). */
 export function detectLanguage(text) {
   if (!text) return null;
   for (const [lang, re] of SCRIPT_TESTS) if (re.test(text)) return lang;
   if (/[\u0900-\u097F]/.test(text)) {
-    // Devanagari: distinguish Marathi (आहे/आहे का words) from Hindi
+    // Devanagari: distinguish Marathi (आहे/आहै words) from Hindi
     if (/आहे|आहै|माझ|तुमचा|केलं|झालं/.test(text)) return 'mr';
     return 'hi';
   }
@@ -87,10 +86,24 @@ export function detectLanguage(text) {
     if (/অসমীয়া|আপুনি|মই |কৰিছো|হ'ব/.test(text)) return 'as';
     return 'bn';
   }
+  if (/[\u0600-\u06FF]/.test(text)) {
+    // Arabic script: Urdu shares it — distinguish by Urdu-specific vocabulary
+    if (/میرا|میری|دعویٰ|دعوے|ہے|کیا|ٹرسٹ|ہیلپ/.test(text)) return 'ur';
+    return 'ar';
+  }
+  if (/[\u0400-\u04FF]/.test(text)) return 'ru';
+  if (/[\u3040-\u30FF]/.test(text)) return 'ja';
+  if (/[\u4E00-\u9FFF]/.test(text)) return 'zh';
   const lower = text.toLowerCase();
   // Romanized Hindi/Marathi code-switching: presence of distinctive function words
   if (/\b(mujhe|mera|meri|kya|chahiye|nahi|nahin|haan|kahan|paisa|milega|hoga|karna|kripya)\b/.test(lower)) return 'hi';
   if (/\b(mala|mazha|ahe|tumcha|kelay|pan)\b/.test(lower)) return 'mr';
+  // Extended Latin catalogue (best-effort; explicit selection is authoritative)
+  if (/\b(reclamación|reclamo|pago|estado de|solicitud|gracias)\b/.test(lower)) return 'es';
+  if (/\b(réclamation|paiement|demande|statut de|bonjour)\b/.test(lower)) return 'fr';
+  if (/\b(antrag|zahlung|genehmigt|gutschrift|meine)\b/.test(lower)) return 'de';
+  if (/\b(reclamação|pagamento|pedido|situação do|olá)\b/.test(lower)) return 'pt';
+  if (/\b(klaim|pembayaran|permintaan|terima kasih|statusnya)\b/.test(lower)) return 'id';
   return 'en';
 }
 

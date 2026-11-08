@@ -27,7 +27,14 @@ const FRIENDLY_STATUS = {
 const friendly = (s) => FRIENDLY_STATUS[s] || { label: s, tone: 'muted' };
 
 export async function renderOverview(root) {
-  root.innerHTML = '<div class="empty">Preparing workspace…</div>';
+  root.innerHTML = `
+    <div class="skel hero"></div>
+    <div class="skel-row">
+      <div class="skel kpi"></div><div class="skel kpi"></div><div class="skel kpi"></div><div class="skel kpi"></div>
+    </div>
+    <div class="skel-row two">
+      <div class="skel chart"></div><div class="skel chart"></div>
+    </div>`;
   const [ov, readiness, queue, callbacks, recent] = await Promise.all([
     api('GET', '/api/analytics/overview?days=14'),
     api('GET', '/api/readiness'),

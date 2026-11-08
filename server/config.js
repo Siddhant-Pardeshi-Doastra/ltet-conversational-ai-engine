@@ -6,6 +6,7 @@ import './dotenv-safe-self.js';
 const env = (k, d = '') => process.env[k] ?? d;
 
 export const APP = {
+  version: '1.0.0',
   mode: env('LTET_MODE', 'demo').toLowerCase() === 'live' ? 'live' : 'demo',
   port: Number(env('PORT', '8787')),
   host: env('HOST', '127.0.0.1'),

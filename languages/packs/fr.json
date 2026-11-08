@@ -1,0 +1,25 @@
+{
+  "lang": "fr",
+  "name": "Français",
+  "script": "Latin",
+  "locale": "fr-FR",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "Bienvenue sur l’assistance téléphonique du Portail de Confiance Employés LTET. Vous êtes en conversation avec un assistant automatisé, et non avec un agent humain.",
+    "ask_enter_ps": "Veuillez saisir votre numéro PS à l’aide du clavier, chiffre par chiffre.",
+    "otp_sent": "J’ai envoyé un code de vérification à votre contact enregistré, se terminant par {ending}. Veuillez saisir le code au clavier. Pour votre sécurité, je ne peux pas le répéter.",
+    "verification_success": "Merci. Votre identité est vérifiée.",
+    "claims_one_confirm": "Vous avez une demande ouverte, {claim_id}, sous {scheme}. Souhaitez-vous connaître son statut ?",
+    "claim_stage_answer": "Votre demande {claim_id} se trouve actuellement à l’étape {stage}.",
+    "claim_approved_intro": "Votre demande {claim_id} a été approuvée par la Finance.",
+    "pay_credited": "Le paiement a été crédité. Un montant de {amount} a été crédité le {credit_date}. La référence bancaire est {bank_reference}.",
+    "pay_pending": "La Finance a approuvé votre demande le {approval_date}. Le paiement est en attente auprès de l’équipe {owner}. Aucune date de paiement n’est encore disponible.",
+    "more_help": "Puis-je vous aider autrement ? Vous pouvez vous renseigner sur une autre demande.",
+    "unclear_retry": "Désolé, je n’ai pas compris. Pouvez-vous répéter ?",
+    "final_goodbye": "Merci d’avoir appelé l’assistance du Portail de Confiance Employés LTET. Au revoir."
+  }
+}

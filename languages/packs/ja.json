@@ -1,0 +1,25 @@
+{
+  "lang": "ja",
+  "name": "日本語",
+  "script": "Japanese",
+  "locale": "ja-JP",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "LTET 従業員トラストポータルのヘルプラインへようこそ。自動アシスタントで対応しております。オペレーターではありません。",
+    "ask_enter_ps": "キーパッドで PS 番号を1桁ずつ入力してください。",
+    "otp_sent": "ご登録の連絡先（末尾 {ending}）に確認コードを送信しました。キーパッドでコードを入力してください。セキュリティのため、コードを読み上げることはできません。",
+    "verification_success": "ありがとうございます。ご本人確認が完了しました。",
+    "claims_one_confirm": "進行中の請求が1件あります：{scheme} の {claim_id} です。状況をご案内しましょうか？",
+    "claim_stage_answer": "請求 {claim_id} は現在 {stage} の段階です。",
+    "claim_approved_intro": "請求 {claim_id} は経理部により承認されました。",
+    "pay_credited": "入金が完了しました。{amount} が {credit_date} に入金されました。銀行参照番号は {bank_reference} です。",
+    "pay_pending": "経理部は {approval_date} に貴方の請求を承認しました。支払いは {owner} チームにて保留中です。支払日は未定です。",
+    "more_help": "他にご用件はございますか？別の請求についてもお尋ねいただけます。",
+    "unclear_retry": "申し訳ございません、聞き取れませんでした。もう一度お願いできますか？",
+    "final_goodbye": "LTET 従業員トラストポータルのヘルプラインにお電話いただき、ありがとうございました。さようなら。"
+  }
+}

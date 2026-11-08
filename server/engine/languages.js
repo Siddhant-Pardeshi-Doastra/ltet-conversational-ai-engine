@@ -13,6 +13,8 @@ import { nowIso } from '../util.js';
 const here = dirname(fileURLToPath(import.meta.url));
 const PACKS_DIR = join(here, '..', '..', 'languages', 'packs');
 
+// FRS-core catalogue order (Release 1 baseline). Extended-catalogue packs are
+// appended dynamically from the packs directory.
 export const LANGUAGE_ORDER = ['en', 'hi', 'bn', 'mr', 'ta', 'te', 'gu', 'pa', 'ml', 'kn', 'or', 'as'];
 
 let cache = null;
@@ -27,13 +29,21 @@ function loadFiles() {
   return cache;
 }
 
+/** All configured languages: FRS core first, then extended catalogue. */
+export function allLanguages() {
+  const packs = loadFiles();
+  const core = LANGUAGE_ORDER.filter((l) => packs[l]);
+  const extended = Object.keys(packs).filter((l) => !core.includes(l)).sort();
+  return [...core, ...extended];
+}
+
 export function allPacks() {
   return loadFiles();
 }
 
 export function packMeta() {
   const packs = loadFiles();
-  return LANGUAGE_ORDER.filter((l) => packs[l]).map((lang) => {
+  return allLanguages().map((lang) => {
     const p = packs[lang];
     const total = Object.keys(packs.en.strings).length;
     const covered = Object.keys(p.strings).filter((k) => packs.en.strings[k]).length;
@@ -44,6 +54,7 @@ export function packMeta() {
       locale: p.locale,
       version: p.version,
       status: p.status,
+      catalogue: p.catalogue || 'frs-core',
       coverage_keys: covered,
       coverage_total: total,
       voice_provider: p.voice_provider,
@@ -54,7 +65,7 @@ export function packMeta() {
 
 export function seedLanguagePacks() {
   const packs = loadFiles();
-  for (const lang of LANGUAGE_ORDER) {
+  for (const lang of allLanguages()) {
     const p = packs[lang];
     if (!p) continue;
     const existing = get(`SELECT version FROM language_packs WHERE lang = ? AND version = ?`, lang, p.version);

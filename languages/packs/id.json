@@ -1,0 +1,25 @@
+{
+  "lang": "id",
+  "name": "Bahasa Indonesia",
+  "script": "Latin",
+  "locale": "id-ID",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "Selamat datang di layanan bantuan Portal Kepercayaan Karyawan LTET. Anda sedang berbicara dengan asisten otomatis, bukan dengan agen manusia.",
+    "ask_enter_ps": "Silakan masukkan nomor PS Anda melalui keypad, satu per satu digitnya.",
+    "otp_sent": "Saya telah mengirim kode verifikasi ke kontak terdaftar Anda yang berakhiran {ending}. Silakan masukkan kode melalui keypad. Demi keamanan, saya tidak dapat mengulanginya.",
+    "verification_success": "Terima kasih. Identitas Anda telah terverifikasi.",
+    "claims_one_confirm": "Anda memiliki satu klaim terbuka, {claim_id}, di bawah {scheme}. Apakah Anda ingin mengetahui statusnya?",
+    "claim_stage_answer": "Klaim Anda {claim_id} saat ini berada pada tahap {stage}.",
+    "claim_approved_intro": "Klaim Anda {claim_id} telah disetujui oleh Keuangan.",
+    "pay_credited": "Pembayaran telah dikreditkan. Sejumlah {amount} telah dikreditkan pada {credit_date}. Referensi bank adalah {bank_reference}.",
+    "pay_pending": "Keuangan menyetujui klaim Anda pada {approval_date}. Pembayaran tertunda di tim {owner}. Tanggal pembayaran belum tersedia.",
+    "more_help": "Ada lagi yang bisa saya bantu? Anda bisa bertanya tentang klaim lain.",
+    "unclear_retry": "Maaf, saya tidak menangkap itu. Bisakah Anda mengulangi?",
+    "final_goodbye": "Terima kasih telah menelepon layanan bantuan Portal Kepercayaan Karyawan LTET. Selamat tinggal."
+  }
+}

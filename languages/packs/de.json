@@ -1,0 +1,25 @@
+{
+  "lang": "de",
+  "name": "Deutsch",
+  "script": "Latin",
+  "locale": "de-DE",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "Willkommen bei der Hotline des LTET-Mitarbeitervertrauensportals. Sie sprechen mit einem automatisierten Assistenten, nicht mit einem menschlichen Agenten.",
+    "ask_enter_ps": "Bitte geben Sie Ihre PS-Nummer über die Tastatur ein, Ziffer für Ziffer.",
+    "otp_sent": "Ich habe einen Bestätigungscode an Ihren registrierten Kontakt gesendet, der auf {ending} endet. Bitte geben Sie den Code über die Tastatur ein. Aus Sicherheitsgründen kann ich ihn nicht wiederholen.",
+    "verification_success": "Vielen Dank. Ihre Identität ist verifiziert.",
+    "claims_one_confirm": "Sie haben einen offenen Antrag, {claim_id}, unter {scheme}. Möchten Sie dessen Status erfahren?",
+    "claim_stage_answer": "Ihr Antrag {claim_id} befindet sich derzeit in der Phase {stage}.",
+    "claim_approved_intro": "Ihr Antrag {claim_id} wurde von der Finanzabteilung genehmigt.",
+    "pay_credited": "Die Zahlung wurde gutgeschrieben. Ein Betrag von {amount} wurde am {credit_date} gutgeschrieben. Die Bankreferenz lautet {bank_reference}.",
+    "pay_pending": "Die Finanzabteilung hat Ihren Antrag am {approval_date} genehmigt. Die Zahlung ist beim Team {owner} in Bearbeitung. Ein Zahlungstermin ist noch nicht verfügbar.",
+    "more_help": "Kann ich sonst noch helfen? Sie können nach einem anderen Antrag fragen.",
+    "unclear_retry": "Entschuldigung, das habe ich nicht verstanden. Können Sie es wiederholen?",
+    "final_goodbye": "Vielen Dank für Ihren Anruf bei der Hotline des LTET-Mitarbeitervertrauensportals. Auf Wiederhören."
+  }
+}

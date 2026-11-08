@@ -1,0 +1,25 @@
+{
+  "lang": "ar",
+  "name": "العربية",
+  "script": "Arabic",
+  "locale": "ar-SA",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "مرحبًا بك في خط مساعدة بوابة ثقة الموظفين. أنت تتحدث مع مساعد آلي، وليس مع وكيل بشري.",
+    "ask_enter_ps": "يرجى إدخال رقم PS الخاص بك عبر لوحة المفاتيح، رقماً رقماً.",
+    "otp_sent": "لقد أرسلت رمز تحقق إلى جهة الاتصال المسجلة لديك، والتي تنتهي بـ {ending}. يرجى إدخال الرمز عبر لوحة المفاتيح. لأمنك، لا يمكنني تكراره.",
+    "verification_success": "شكرًا لك. تم التحقق من هويتك.",
+    "claims_one_confirm": "لديك مطالبة مفتوحة واحدة، {claim_id}، ضمن {scheme}. هل ترغب في معرفة حالتها؟",
+    "claim_stage_answer": "مطالبتك {claim_id} هي حاليًا في مرحلة {stage}.",
+    "claim_approved_intro": "تمت الموافقة على مطالبتك {claim_id} من قبل الإدارة المالية.",
+    "pay_credited": "تم إيداع الدفعة. تم إيداع مبلغ {amount} في {credit_date}. المرجع البنكي هو {bank_reference}.",
+    "pay_pending": "وافقت الإدارة المالية على مطالبتك في {approval_date}. الدفعة معلقة لدى فريق {owner}. لا يوجد تاريخ دفع متاح بعد.",
+    "more_help": "هل يمكنني مساعدتك في شيء آخر؟ يمكنك الاستفسار عن مطالبة أخرى.",
+    "unclear_retry": "عذرًا، لم أفهم. هل يمكنك التكرار؟",
+    "final_goodbye": "شكرًا لاتصالك بخط مساعدة بوابة ثقة الموظفين. وداعًا."
+  }
+}

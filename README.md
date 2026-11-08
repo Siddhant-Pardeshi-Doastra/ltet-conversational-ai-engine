@@ -31,11 +31,17 @@ durable worker + tests + governed administration, all on synthetic data.
   with digit-by-digit confirmation, challenge to the beneficiary's calling number,
   and **least-privilege enforcement via a trusted binding + explicit grant**
   (proposed security extension — see [docs/SECURITY_DECISIONS.md](docs/SECURITY_DECISIONS.md)).
-- **Vernacular conversation** — all 12 FRS languages configured (English, Hindi,
-  Bengali, Marathi, Tamil, Telugu, Gujarati, Punjabi, Malayalam, Kannada, Odia,
-  Assamese) with code-switching, spoken numbers and ordinals. English is
-  native-approved; the other packs are labelled *draft translations* pending
-  native-speaker sign-off (FR-37).
+- **Vernacular conversation** — 22 languages configured: the 12 FRS-core languages
+  (English, Hindi, Bengali, Marathi, Tamil, Telugu, Gujarati, Punjabi, Malayalam,
+  Kannada, Odia, Assamese) plus a 10-language extended catalogue (Urdu, Spanish,
+  French, German, Portuguese, Arabic, Chinese, Japanese, Russian, Indonesian),
+  with code-switching, spoken numbers and ordinals. English is native-approved;
+  all other packs are labelled *draft translations* pending native-speaker
+  sign-off (FR-37).
+- **Human-grade voice** — the assistant ranks device voices per language
+  (preferring neural/natural voices), speaks in sentence cadence with natural
+  breath pauses, and exposes a voice picker with per-language prosody. Live
+  neural TTS providers plug into the same interface.
 - **Post-call intelligence** — durable outbox worker creates the immutable call log,
   deduplicated claim entries, document history, structured English summary,
   processor alerts and analytics. It survives restarts and replays.
@@ -89,7 +95,7 @@ fallback commands, troubleshooting and presenter guardrails.
 |---|---|
 | `npm run seed` | Apply migrations + seed synthetic fixtures (add `--force` via `node server/seed.js --force` to reset) |
 | `npm start` | Start engine + staff console + post-call worker |
-| `npm test` | 77 automated tests: engine, conversation (BDD-mapped), security (SEC-mapped), post-call durability, API, live-mode gating |
+| `npm test` | 78 automated tests: engine, conversation (BDD-mapped), security (SEC-mapped), post-call durability, API, live-mode gating |
 | `npm run lint` | Syntax check all sources |
 | `npm run demo` | Reset workspace data + start |
 
@@ -114,7 +120,7 @@ are rejected before save (FR-39).
 
 ## Tests
 
-`npm test` runs 77 tests in 6 suites (Node's built-in runner):
+`npm test` runs 78 tests in 6 suites (Node's built-in runner):
 
 - **engine** — intent parsing across all 12 languages, code-switching, ordinals,
   PS/claim-ID capture, fact-validation blocking, money formatting.
@@ -141,7 +147,7 @@ native-speaker language sign-off, load).
 ```
 server/            engine, adapters, services, routes (Node 22 ESM, express, node:sqlite)
 public/            no-build SPA (vanilla ES modules + hand-rolled SVG charts)
-languages/packs/   12 versioned language packs with review status
+languages/packs/   22 versioned language packs (12 FRS-core + 10 extended)
 contracts/         proposed OpenAPI 3.1 definition
 tests/             6 test suites (node:test)
 docs/              project context, traceability, architecture, workflows,

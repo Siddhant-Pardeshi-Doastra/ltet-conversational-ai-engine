@@ -1,0 +1,25 @@
+{
+  "lang": "ur",
+  "name": "اردو",
+  "script": "Arabic (Urdu)",
+  "locale": "ur-PK",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "ایل ٹی ای ٹی ملازم ٹرسٹ پورٹل ہیلپ لائن میں خوش آمدید۔ آپ خودکار معاون سے بات کر رہے ہیں، کسی انسانی ایجنٹ سے نہیں۔",
+    "ask_enter_ps": "براہ کرم اپنا پی ایس نمبر کیپیڈ سے، ایک ایک عدد کر کے درج کریں۔",
+    "otp_sent": "میں نے آپ کے رجسٹرڈ رابطے، جو {ending} پر ختم ہوتا ہے، پر تصدیقی کوڈ بھیجا ہے۔ براہ کرم کوڈ کیپیڈ سے درج کریں۔ آپ کی سیکیورٹی کے لیے میں اسے دہرا نہیں سکتا۔",
+    "verification_success": "شکریہ۔ آپ کی شناخت کی تصدیق ہو گئی ہے۔",
+    "claims_one_confirm": "آپ کا ایک کھلا دعویٰ ہے، {claim_id}، {scheme} کے تحت۔ کیا آپ اس کی صورتحال جاننا چاہیں گے؟",
+    "claim_stage_answer": "آپ کا دعویٰ {claim_id} اس وقت {stage} مرحلے پر ہے۔",
+    "claim_approved_intro": "آپ کا دعویٰ {claim_id} فنانس نے منظور کر لیا ہے۔",
+    "pay_credited": "ادائیگی جمع ہو گئی ہے۔ {amount} رقم {credit_date} کو جمع ہوئی۔ بینک حوالہ {bank_reference} ہے۔",
+    "pay_pending": "فنانس نے آپ کا دعویٰ {approval_date} کو منظور کیا۔ ادائیگی {owner} ٹیم کے پاس زیر التوا ہے۔ ادائیگی کی تاریخ ابھی دستیاب نہیں۔",
+    "more_help": "کیا کچھ اور میں آپ کی مدد کر سکتا ہوں؟ آپ کسی اور دعوے کے بارے میں پوچھ سکتے ہیں۔",
+    "unclear_retry": "معاف کیجیے، میں سمجھ نہیں سکا۔ کیا آپ دہرا سکتے ہیں؟",
+    "final_goodbye": "ایل ٹی ای ٹی ملازم ٹرسٹ پورٹل ہیلپ لائن کو کال کرنے کا شکریہ۔ خدا حافظ۔"
+  }
+}

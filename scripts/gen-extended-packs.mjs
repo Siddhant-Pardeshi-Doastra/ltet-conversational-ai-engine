@@ -1,0 +1,215 @@
+// Generates the 10 extended-catalogue language packs (draft translations).
+// The 12 FRS-core packs are authored files; these extend the catalogue per the
+// product roadmap. Run: node scripts/gen-extended-packs.mjs
+import { writeFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'languages', 'packs');
+
+const K = {
+  greeting: 'Welcome to the LTET Employee Trust Portal helpline. You are speaking with the automated assistant, not a human agent.',
+  ask_enter_ps: 'Please enter your PS number using your keypad, digit by digit.',
+  otp_sent: 'I have sent a verification code to your registered contact ending {ending}. Please enter the code using your keypad. For your security, I cannot repeat it back.',
+  verification_success: 'Thank you. Your identity is verified.',
+  claims_one_confirm: 'You have one open claim, {claim_id}, under {scheme}. Would you like to know its status?',
+  claim_stage_answer: 'Your claim {claim_id} is currently at the {stage} stage.',
+  claim_query_note: 'Please note: there is an open query from the {query_stage}. The query says: {query_text}. Please visit the LTET portal to respond to this query.',
+  claim_approved_intro: 'Your claim {claim_id} has been approved by Finance.',
+  pay_credited: 'The payment has been credited. An amount of {amount} was credited on {credit_date}. The bank reference is {bank_reference}.',
+  pay_pending: 'Finance approved your claim on {approval_date}. The payment is pending with the {owner} team. No payment date is available yet.',
+  more_help: 'Is there anything else I can help you with? You can ask about another claim.',
+  unclear_retry: 'Sorry, I did not catch that. Could you please repeat?',
+  final_goodbye: 'Thank you for calling the LTET Employee Trust Portal helpline. Goodbye.',
+};
+
+const packs = [
+  {
+    lang: 'ur', name: 'اردو', script: 'Arabic (Urdu)', locale: 'ur-PK',
+    t: {
+      greeting: 'ایل ٹی ای ٹی ملازم ٹرسٹ پورٹل ہیلپ لائن میں خوش آمدید۔ آپ خودکار معاون سے بات کر رہے ہیں، کسی انسانی ایجنٹ سے نہیں۔',
+      ask_enter_ps: 'براہ کرم اپنا پی ایس نمبر کیپیڈ سے، ایک ایک عدد کر کے درج کریں۔',
+      otp_sent: 'میں نے آپ کے رجسٹرڈ رابطے، جو {ending} پر ختم ہوتا ہے، پر تصدیقی کوڈ بھیجا ہے۔ براہ کرم کوڈ کیپیڈ سے درج کریں۔ آپ کی سیکیورٹی کے لیے میں اسے دہرا نہیں سکتا۔',
+      verification_success: 'شکریہ۔ آپ کی شناخت کی تصدیق ہو گئی ہے۔',
+      claims_one_confirm: 'آپ کا ایک کھلا دعویٰ ہے، {claim_id}، {scheme} کے تحت۔ کیا آپ اس کی صورتحال جاننا چاہیں گے؟',
+      claim_stage_answer: 'آپ کا دعویٰ {claim_id} اس وقت {stage} مرحلے پر ہے۔',
+      claim_approved_intro: 'آپ کا دعویٰ {claim_id} فنانس نے منظور کر لیا ہے۔',
+      pay_credited: 'ادائیگی جمع ہو گئی ہے۔ {amount} رقم {credit_date} کو جمع ہوئی۔ بینک حوالہ {bank_reference} ہے۔',
+      pay_pending: 'فنانس نے آپ کا دعویٰ {approval_date} کو منظور کیا۔ ادائیگی {owner} ٹیم کے پاس زیر التوا ہے۔ ادائیگی کی تاریخ ابھی دستیاب نہیں۔',
+      more_help: 'کیا کچھ اور میں آپ کی مدد کر سکتا ہوں؟ آپ کسی اور دعوے کے بارے میں پوچھ سکتے ہیں۔',
+      unclear_retry: 'معاف کیجیے، میں سمجھ نہیں سکا۔ کیا آپ دہرا سکتے ہیں؟',
+      final_goodbye: 'ایل ٹی ای ٹی ملازم ٹرسٹ پورٹل ہیلپ لائن کو کال کرنے کا شکریہ۔ خدا حافظ۔',
+    },
+  },
+  {
+    lang: 'es', name: 'Español', script: 'Latin', locale: 'es-ES',
+    t: {
+      greeting: 'Bienvenido a la línea de ayuda del Portal de Confianza para Empleados LTET. Está hablando con un asistente automatizado, no con un agente humano.',
+      ask_enter_ps: 'Por favor, introduzca su número de PS con el teclado, dígito a dígito.',
+      otp_sent: 'He enviado un código de verificación a su contacto registrado, que termina en {ending}. Introduzca el código con el teclado. Por seguridad, no puedo repetírselo.',
+      verification_success: 'Gracias. Su identidad ha sido verificada.',
+      claims_one_confirm: 'Tiene una solicitud abierta, {claim_id}, bajo {scheme}. ¿Desea conocer su estado?',
+      claim_stage_answer: 'Su solicitud {claim_id} se encuentra actualmente en la etapa {stage}.',
+      claim_approved_intro: 'Su solicitud {claim_id} ha sido aprobada por Finanzas.',
+      pay_credited: 'El pago ha sido abonado. Se abonó un importe de {amount} el {credit_date}. La referencia bancaria es {bank_reference}.',
+      pay_pending: 'Finanzas aprobó su solicitud el {approval_date}. El pago está pendiente con el equipo de {owner}. Aún no hay fecha de pago disponible.',
+      more_help: '¿Puedo ayudarle en algo más? Puede preguntar por otra solicitud.',
+      unclear_retry: 'Lo siento, no le he entendido. ¿Puede repetirlo?',
+      final_goodbye: 'Gracias por llamar a la línea de ayuda del Portal de Confianza para Empleados LTET. Adiós.',
+    },
+  },
+  {
+    lang: 'fr', name: 'Français', script: 'Latin', locale: 'fr-FR',
+    t: {
+      greeting: 'Bienvenue sur l’assistance téléphonique du Portail de Confiance Employés LTET. Vous êtes en conversation avec un assistant automatisé, et non avec un agent humain.',
+      ask_enter_ps: 'Veuillez saisir votre numéro PS à l’aide du clavier, chiffre par chiffre.',
+      otp_sent: 'J’ai envoyé un code de vérification à votre contact enregistré, se terminant par {ending}. Veuillez saisir le code au clavier. Pour votre sécurité, je ne peux pas le répéter.',
+      verification_success: 'Merci. Votre identité est vérifiée.',
+      claims_one_confirm: 'Vous avez une demande ouverte, {claim_id}, sous {scheme}. Souhaitez-vous connaître son statut ?',
+      claim_stage_answer: 'Votre demande {claim_id} se trouve actuellement à l’étape {stage}.',
+      claim_approved_intro: 'Votre demande {claim_id} a été approuvée par la Finance.',
+      pay_credited: 'Le paiement a été crédité. Un montant de {amount} a été crédité le {credit_date}. La référence bancaire est {bank_reference}.',
+      pay_pending: 'La Finance a approuvé votre demande le {approval_date}. Le paiement est en attente auprès de l’équipe {owner}. Aucune date de paiement n’est encore disponible.',
+      more_help: 'Puis-je vous aider autrement ? Vous pouvez vous renseigner sur une autre demande.',
+      unclear_retry: 'Désolé, je n’ai pas compris. Pouvez-vous répéter ?',
+      final_goodbye: 'Merci d’avoir appelé l’assistance du Portail de Confiance Employés LTET. Au revoir.',
+    },
+  },
+  {
+    lang: 'de', name: 'Deutsch', script: 'Latin', locale: 'de-DE',
+    t: {
+      greeting: 'Willkommen bei der Hotline des LTET-Mitarbeitervertrauensportals. Sie sprechen mit einem automatisierten Assistenten, nicht mit einem menschlichen Agenten.',
+      ask_enter_ps: 'Bitte geben Sie Ihre PS-Nummer über die Tastatur ein, Ziffer für Ziffer.',
+      otp_sent: 'Ich habe einen Bestätigungscode an Ihren registrierten Kontakt gesendet, der auf {ending} endet. Bitte geben Sie den Code über die Tastatur ein. Aus Sicherheitsgründen kann ich ihn nicht wiederholen.',
+      verification_success: 'Vielen Dank. Ihre Identität ist verifiziert.',
+      claims_one_confirm: 'Sie haben einen offenen Antrag, {claim_id}, unter {scheme}. Möchten Sie dessen Status erfahren?',
+      claim_stage_answer: 'Ihr Antrag {claim_id} befindet sich derzeit in der Phase {stage}.',
+      claim_approved_intro: 'Ihr Antrag {claim_id} wurde von der Finanzabteilung genehmigt.',
+      pay_credited: 'Die Zahlung wurde gutgeschrieben. Ein Betrag von {amount} wurde am {credit_date} gutgeschrieben. Die Bankreferenz lautet {bank_reference}.',
+      pay_pending: 'Die Finanzabteilung hat Ihren Antrag am {approval_date} genehmigt. Die Zahlung ist beim Team {owner} in Bearbeitung. Ein Zahlungstermin ist noch nicht verfügbar.',
+      more_help: 'Kann ich sonst noch helfen? Sie können nach einem anderen Antrag fragen.',
+      unclear_retry: 'Entschuldigung, das habe ich nicht verstanden. Können Sie es wiederholen?',
+      final_goodbye: 'Vielen Dank für Ihren Anruf bei der Hotline des LTET-Mitarbeitervertrauensportals. Auf Wiederhören.',
+    },
+  },
+  {
+    lang: 'pt', name: 'Português', script: 'Latin', locale: 'pt-BR',
+    t: {
+      greeting: 'Bem-vindo à linha de ajuda do Portal de Confiança do Colaborador LTET. Você está falando com um assistente automatizado, não com um agente humano.',
+      ask_enter_ps: 'Por favor, digite seu número PS no teclado, dígito por dígito.',
+      otp_sent: 'Enviei um código de verificação para o seu contato registrado, que termina em {ending}. Digite o código no teclado. Por segurança, não posso repeti-lo.',
+      verification_success: 'Obrigado. Sua identidade foi verificada.',
+      claims_one_confirm: 'Você tem um pedido aberto, {claim_id}, sob {scheme}. Gostaria de saber o status dele?',
+      claim_stage_answer: 'Seu pedido {claim_id} está atualmente na etapa {stage}.',
+      claim_approved_intro: 'Seu pedido {claim_id} foi aprovado pela Financeiro.',
+      pay_credited: 'O pagamento foi creditado. Um valor de {amount} foi creditado em {credit_date}. A referência bancária é {bank_reference}.',
+      pay_pending: 'O Financeiro aprovou seu pedido em {approval_date}. O pagamento está pendente com a equipe {owner}. Ainda não há data de pagamento disponível.',
+      more_help: 'Posso ajudar em algo mais? Você pode perguntar sobre outro pedido.',
+      unclear_retry: 'Desculpe, não entendi. Pode repetir, por favor?',
+      final_goodbye: 'Obrigado por ligar para a linha de ajuda do Portal de Confiança do Colaborador LTET. Tchau.',
+    },
+  },
+  {
+    lang: 'ar', name: 'العربية', script: 'Arabic', locale: 'ar-SA',
+    t: {
+      greeting: 'مرحبًا بك في خط مساعدة بوابة ثقة الموظفين. أنت تتحدث مع مساعد آلي، وليس مع وكيل بشري.',
+      ask_enter_ps: 'يرجى إدخال رقم PS الخاص بك عبر لوحة المفاتيح، رقماً رقماً.',
+      otp_sent: 'لقد أرسلت رمز تحقق إلى جهة الاتصال المسجلة لديك، والتي تنتهي بـ {ending}. يرجى إدخال الرمز عبر لوحة المفاتيح. لأمنك، لا يمكنني تكراره.',
+      verification_success: 'شكرًا لك. تم التحقق من هويتك.',
+      claims_one_confirm: 'لديك مطالبة مفتوحة واحدة، {claim_id}، ضمن {scheme}. هل ترغب في معرفة حالتها؟',
+      claim_stage_answer: 'مطالبتك {claim_id} هي حاليًا في مرحلة {stage}.',
+      claim_approved_intro: 'تمت الموافقة على مطالبتك {claim_id} من قبل الإدارة المالية.',
+      pay_credited: 'تم إيداع الدفعة. تم إيداع مبلغ {amount} في {credit_date}. المرجع البنكي هو {bank_reference}.',
+      pay_pending: 'وافقت الإدارة المالية على مطالبتك في {approval_date}. الدفعة معلقة لدى فريق {owner}. لا يوجد تاريخ دفع متاح بعد.',
+      more_help: 'هل يمكنني مساعدتك في شيء آخر؟ يمكنك الاستفسار عن مطالبة أخرى.',
+      unclear_retry: 'عذرًا، لم أفهم. هل يمكنك التكرار؟',
+      final_goodbye: 'شكرًا لاتصالك بخط مساعدة بوابة ثقة الموظفين. وداعًا.',
+    },
+  },
+  {
+    lang: 'zh', name: '中文', script: 'Han', locale: 'zh-CN',
+    t: {
+      greeting: '欢迎致电 LTET 员工信赖门户服务热线。您正在与自动助手通话，而非人工客服。',
+      ask_enter_ps: '请通过键盘逐位输入您的 PS 编号。',
+      otp_sent: '我已向您的注册联系方式（尾号 {ending}）发送了验证码。请通过键盘输入验证码。为了您的安全，我无法复述该验证码。',
+      verification_success: '谢谢。您的身份已验证。',
+      claims_one_confirm: '您有一笔未结申请 {claim_id}，属于 {scheme}。您想了解它的状态吗？',
+      claim_stage_answer: '您的申请 {claim_id} 目前处于 {stage} 阶段。',
+      claim_approved_intro: '您的申请 {claim_id} 已获财务部门批准。',
+      pay_credited: '款项已入账。金额 {amount} 已于 {credit_date} 入账。银行参考号为 {bank_reference}。',
+      pay_pending: '财务部门已于 {approval_date} 批准您的申请。款项正在 {owner} 团队处理中，尚无付款日期。',
+      more_help: '还有什么可以帮您的吗？您可以询问另一笔申请。',
+      unclear_retry: '抱歉，我没有听清。请您再说一遍好吗？',
+      final_goodbye: '感谢您致电 LTET 员工信赖门户服务热线。再见。',
+    },
+  },
+  {
+    lang: 'ja', name: '日本語', script: 'Japanese', locale: 'ja-JP',
+    t: {
+      greeting: 'LTET 従業員トラストポータルのヘルプラインへようこそ。自動アシスタントで対応しております。オペレーターではありません。',
+      ask_enter_ps: 'キーパッドで PS 番号を1桁ずつ入力してください。',
+      otp_sent: 'ご登録の連絡先（末尾 {ending}）に確認コードを送信しました。キーパッドでコードを入力してください。セキュリティのため、コードを読み上げることはできません。',
+      verification_success: 'ありがとうございます。ご本人確認が完了しました。',
+      claims_one_confirm: '進行中の請求が1件あります：{scheme} の {claim_id} です。状況をご案内しましょうか？',
+      claim_stage_answer: '請求 {claim_id} は現在 {stage} の段階です。',
+      claim_approved_intro: '請求 {claim_id} は経理部により承認されました。',
+      pay_credited: '入金が完了しました。{amount} が {credit_date} に入金されました。銀行参照番号は {bank_reference} です。',
+      pay_pending: '経理部は {approval_date} に貴方の請求を承認しました。支払いは {owner} チームにて保留中です。支払日は未定です。',
+      more_help: '他にご用件はございますか？別の請求についてもお尋ねいただけます。',
+      unclear_retry: '申し訳ございません、聞き取れませんでした。もう一度お願いできますか？',
+      final_goodbye: 'LTET 従業員トラストポータルのヘルプラインにお電話いただき、ありがとうございました。さようなら。',
+    },
+  },
+  {
+    lang: 'ru', name: 'Русский', script: 'Cyrillic', locale: 'ru-RU',
+    t: {
+      greeting: 'Добро пожаловать на горячую линию портала доверия сотрудников LTET. Вы разговариваете с автоматизированным помощником, а не с живым оператором.',
+      ask_enter_ps: 'Пожалуйста, введите ваш номер PS на клавиатуре, цифру за цифрой.',
+      otp_sent: 'Я отправил код подтверждения на ваш зарегистрированный контакт, оканчивающийся на {ending}. Введите код с клавиатуры. В целях безопасности я не могу повторить его.',
+      verification_success: 'Спасибо. Ваша личность подтверждена.',
+      claims_one_confirm: 'У вас одно открытое требование, {claim_id}, по программе {scheme}. Хотите узнать его статус?',
+      claim_stage_answer: 'Ваше требование {claim_id} сейчас находится на этапе {stage}.',
+      claim_approved_intro: 'Ваше требование {claim_id} утверждено финансовым отделом.',
+      pay_credited: 'Платёж зачислен. Сумма {amount} зачислена {credit_date}. Банковская ссылка: {bank_reference}.',
+      pay_pending: 'Финансовый отдел одобрил ваше требование {approval_date}. Платёж в обработке у команды {owner}. Дата платежа пока неизвестна.',
+      more_help: 'Чем ещё могу помочь? Вы можете спросить о другом требовании.',
+      unclear_retry: 'Извините, я не расслышал. Повторите, пожалуйста.',
+      final_goodbye: 'Спасибо за звонок на горячую линию портала доверия сотрудников LTET. До свидания.',
+    },
+  },
+  {
+    lang: 'id', name: 'Bahasa Indonesia', script: 'Latin', locale: 'id-ID',
+    t: {
+      greeting: 'Selamat datang di layanan bantuan Portal Kepercayaan Karyawan LTET. Anda sedang berbicara dengan asisten otomatis, bukan dengan agen manusia.',
+      ask_enter_ps: 'Silakan masukkan nomor PS Anda melalui keypad, satu per satu digitnya.',
+      otp_sent: 'Saya telah mengirim kode verifikasi ke kontak terdaftar Anda yang berakhiran {ending}. Silakan masukkan kode melalui keypad. Demi keamanan, saya tidak dapat mengulanginya.',
+      verification_success: 'Terima kasih. Identitas Anda telah terverifikasi.',
+      claims_one_confirm: 'Anda memiliki satu klaim terbuka, {claim_id}, di bawah {scheme}. Apakah Anda ingin mengetahui statusnya?',
+      claim_stage_answer: 'Klaim Anda {claim_id} saat ini berada pada tahap {stage}.',
+      claim_approved_intro: 'Klaim Anda {claim_id} telah disetujui oleh Keuangan.',
+      pay_credited: 'Pembayaran telah dikreditkan. Sejumlah {amount} telah dikreditkan pada {credit_date}. Referensi bank adalah {bank_reference}.',
+      pay_pending: 'Keuangan menyetujui klaim Anda pada {approval_date}. Pembayaran tertunda di tim {owner}. Tanggal pembayaran belum tersedia.',
+      more_help: 'Ada lagi yang bisa saya bantu? Anda bisa bertanya tentang klaim lain.',
+      unclear_retry: 'Maaf, saya tidak menangkap itu. Bisakah Anda mengulangi?',
+      final_goodbye: 'Terima kasih telah menelepon layanan bantuan Portal Kepercayaan Karyawan LTET. Selamat tinggal.',
+    },
+  },
+];
+
+for (const p of packs) {
+  const out = {
+    lang: p.lang,
+    name: p.name,
+    script: p.script,
+    locale: p.locale,
+    version: 1,
+    status: 'draft_translation',
+    voice_provider: 'browser_demo',
+    catalogue: 'extended',
+    coverage_note: 'Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.',
+    strings: p.t,
+  };
+  writeFileSync(join(dir, `${p.lang}.json`), JSON.stringify(out, null, 2) + '\n');
+  console.log(`wrote ${p.lang}.json (${Object.keys(p.t).length} keys)`);
+}
+console.log('done:', packs.map((p) => p.lang).join(', '));

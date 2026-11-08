@@ -1,0 +1,25 @@
+{
+  "lang": "pt",
+  "name": "Português",
+  "script": "Latin",
+  "locale": "pt-BR",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "Bem-vindo à linha de ajuda do Portal de Confiança do Colaborador LTET. Você está falando com um assistente automatizado, não com um agente humano.",
+    "ask_enter_ps": "Por favor, digite seu número PS no teclado, dígito por dígito.",
+    "otp_sent": "Enviei um código de verificação para o seu contato registrado, que termina em {ending}. Digite o código no teclado. Por segurança, não posso repeti-lo.",
+    "verification_success": "Obrigado. Sua identidade foi verificada.",
+    "claims_one_confirm": "Você tem um pedido aberto, {claim_id}, sob {scheme}. Gostaria de saber o status dele?",
+    "claim_stage_answer": "Seu pedido {claim_id} está atualmente na etapa {stage}.",
+    "claim_approved_intro": "Seu pedido {claim_id} foi aprovado pela Financeiro.",
+    "pay_credited": "O pagamento foi creditado. Um valor de {amount} foi creditado em {credit_date}. A referência bancária é {bank_reference}.",
+    "pay_pending": "O Financeiro aprovou seu pedido em {approval_date}. O pagamento está pendente com a equipe {owner}. Ainda não há data de pagamento disponível.",
+    "more_help": "Posso ajudar em algo mais? Você pode perguntar sobre outro pedido.",
+    "unclear_retry": "Desculpe, não entendi. Pode repetir, por favor?",
+    "final_goodbye": "Obrigado por ligar para a linha de ajuda do Portal de Confiança do Colaborador LTET. Tchau."
+  }
+}

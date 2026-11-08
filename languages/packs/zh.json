@@ -1,0 +1,25 @@
+{
+  "lang": "zh",
+  "name": "中文",
+  "script": "Han",
+  "locale": "zh-CN",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "欢迎致电 LTET 员工信赖门户服务热线。您正在与自动助手通话，而非人工客服。",
+    "ask_enter_ps": "请通过键盘逐位输入您的 PS 编号。",
+    "otp_sent": "我已向您的注册联系方式（尾号 {ending}）发送了验证码。请通过键盘输入验证码。为了您的安全，我无法复述该验证码。",
+    "verification_success": "谢谢。您的身份已验证。",
+    "claims_one_confirm": "您有一笔未结申请 {claim_id}，属于 {scheme}。您想了解它的状态吗？",
+    "claim_stage_answer": "您的申请 {claim_id} 目前处于 {stage} 阶段。",
+    "claim_approved_intro": "您的申请 {claim_id} 已获财务部门批准。",
+    "pay_credited": "款项已入账。金额 {amount} 已于 {credit_date} 入账。银行参考号为 {bank_reference}。",
+    "pay_pending": "财务部门已于 {approval_date} 批准您的申请。款项正在 {owner} 团队处理中，尚无付款日期。",
+    "more_help": "还有什么可以帮您的吗？您可以询问另一笔申请。",
+    "unclear_retry": "抱歉，我没有听清。请您再说一遍好吗？",
+    "final_goodbye": "感谢您致电 LTET 员工信赖门户服务热线。再见。"
+  }
+}

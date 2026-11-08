@@ -21,7 +21,7 @@ test('health + readiness report explicit demo boundaries', async () => {
   assert.equal(r.json.mode, 'demo');
   assert.equal(r.json.ready, true, 'demo mode is ready');
   assert.equal(r.json.demo_mode, true);
-  assert.equal(r.json.languages.configured, 12);
+  assert.equal(r.json.languages.configured, 22, '12 FRS-core + 10 extended languages');
   assert.ok(r.json.languages.note.includes('sign-off'), 'language readiness honesty');
 });
 

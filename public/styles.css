@@ -366,3 +366,49 @@ code.inline { background: #eef2f6; border-radius: 4px; padding: 1px 6px; font-fa
   .chart .draw, .chart .sweep { stroke-dashoffset: 0 !important; animation: none !important; }
   .chart .grow { transform: none !important; animation: none !important; }
 }
+
+/* =====================================================================
+   Designer pass v1.1 — skeletons, scrollbars, selection, phone polish
+   ===================================================================== */
+::selection { background: rgba(20, 145, 155, 0.25); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #b9c7d3; border-radius: 8px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--teal-500); }
+.transcript::-webkit-scrollbar-thumb { background: #2c5170; border-color: var(--navy-800); }
+.transcript::-webkit-scrollbar-thumb:hover { background: var(--teal-500); }
+
+/* skeleton loaders */
+@keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+.skel {
+  border-radius: 10px;
+  background: linear-gradient(90deg, #e6edf3 25%, #f3f7fa 37%, #e6edf3 63%);
+  background-size: 400% 100%;
+  animation: skel 1.4s ease infinite;
+}
+.skel.hero { height: 128px; margin-bottom: 18px; border-radius: 16px; }
+.skel.kpi { height: 96px; }
+.skel.chart { height: 220px; }
+.skel-row { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); margin-bottom: 18px; }
+.skel-row.two { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1080px) { .skel-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 760px) { .skel-row { grid-template-columns: 1fr; } }
+
+/* phone polish: status bar + screen hairline */
+.phone { border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 18px 44px rgba(11, 31, 51, 0.45); }
+.phone-statusbar {
+  display: flex; align-items: center; gap: 8px; padding: 0 6px 8px;
+  color: #7fa3bd; font-size: 11px; font-variant-numeric: tabular-nums;
+}
+.phone-statusbar .sb-right { margin-left: auto; display: flex; gap: 5px; align-items: center; }
+.phone-statusbar .sb-bar { width: 14px; height: 8px; position: relative; }
+.phone-statusbar .sb-bar::before { content: ""; position: absolute; inset: 0; border: 1px solid #7fa3bd; border-radius: 2px; }
+.phone-statusbar .sb-bar::after { content: ""; position: absolute; left: 1px; top: 1px; bottom: 1px; width: 70%; background: #4fb3a5; border-radius: 1px; }
+
+/* form polish */
+select, input[type="text"], input[type="password"], input[type="search"], textarea { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+select:focus, input:focus, textarea:focus { border-color: var(--teal-500); box-shadow: 0 0 0 3px rgba(20, 145, 155, 0.14); outline: none; }
+.table td { transition: background 0.12s ease; }
+
+/* group optgroup labels in the language selector */
+select optgroup { font-weight: 700; color: var(--navy-600); }

@@ -1,16 +1,26 @@
 // Health + readiness (explicit demo/live boundaries; live with missing config FAILS).
 import { Router } from 'express';
 import { APP, isDemoMode, validatePolicy } from '../config.js';
+import { packMeta } from '../engine/languages.js';
 import { get } from '../db.js';
 import { readiness as portalReadiness } from '../adapters/portal.js';
 import { speechReadiness } from '../adapters/speech.js';
 import { queueStats } from '../services/postcall.js';
-import { packMeta } from '../engine/languages.js';
 
 const r = Router();
 
 r.get('/health', (_req, res) => {
-  res.json({ ok: true, mode: APP.mode, at: new Date().toISOString() });
+  res.json({ ok: true, mode: APP.mode, version: APP.version, at: new Date().toISOString() });
+});
+
+/** Language catalogue (metadata only — safe for the console to consume). */
+r.get('/languages', (_req, res) => {
+  const packs = packMeta();
+  res.json({
+    total: packs.length,
+    frs_core: packs.filter((p) => p.catalogue === 'frs-core').map((p) => ({ ...p })),
+    extended: packs.filter((p) => p.catalogue === 'extended').map((p) => ({ ...p })),
+  });
 });
 
 r.get('/readiness', (_req, res) => {

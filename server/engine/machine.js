@@ -10,7 +10,7 @@
 //  - The machine can never mutate claims/payments; its writes are limited to
 //    engine-owned operational records.
 import { parseUtterance } from './intents.js';
-import { t, languageName, LANGUAGE_ORDER } from './languages.js';
+import { t, languageName, allLanguages } from './languages.js';
 import * as portal from '../adapters/portal.js';
 import { createChallenge, verifyChallenge, resendChallenge, hasActiveChallenge } from '../adapters/otp.js';
 import { buildClaimStagePlan, buildPaymentPlans, validateAndRender } from './answers.js';
@@ -184,7 +184,7 @@ export function handleEvent(session, event, { policy }) {
     p = parseUtterance(event.text);
 
     // FR-20: language switch on request (any state).
-    if (p.switchLang && LANGUAGE_ORDER.includes(p.switchLang) && p.switchLang !== session.language) {
+    if (p.switchLang && allLanguages().includes(p.switchLang) && p.switchLang !== session.language) {
       session.language = p.switchLang;
       patch.language = p.switchLang;
       push(say('language_switch_ack', { language: languageName(p.switchLang) }, p.switchLang));
@@ -242,7 +242,7 @@ export function handleEvent(session, event, { policy }) {
         if (event.digits === '1') { session.language = 'en'; patch.language = 'en'; }
         else if (event.digits === '2') { session.language = 'hi'; patch.language = 'hi'; }
       } else if (event.type === 'utterance') {
-        if (!p.switchLang && p.lang && LANGUAGE_ORDER.includes(p.lang)) {
+        if (!p.switchLang && p.lang && allLanguages().includes(p.lang)) {
           session.language = p.lang;
           patch.language = p.lang;
         }

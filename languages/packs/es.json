@@ -1,0 +1,25 @@
+{
+  "lang": "es",
+  "name": "Español",
+  "script": "Latin",
+  "locale": "es-ES",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "Bienvenido a la línea de ayuda del Portal de Confianza para Empleados LTET. Está hablando con un asistente automatizado, no con un agente humano.",
+    "ask_enter_ps": "Por favor, introduzca su número de PS con el teclado, dígito a dígito.",
+    "otp_sent": "He enviado un código de verificación a su contacto registrado, que termina en {ending}. Introduzca el código con el teclado. Por seguridad, no puedo repetírselo.",
+    "verification_success": "Gracias. Su identidad ha sido verificada.",
+    "claims_one_confirm": "Tiene una solicitud abierta, {claim_id}, bajo {scheme}. ¿Desea conocer su estado?",
+    "claim_stage_answer": "Su solicitud {claim_id} se encuentra actualmente en la etapa {stage}.",
+    "claim_approved_intro": "Su solicitud {claim_id} ha sido aprobada por Finanzas.",
+    "pay_credited": "El pago ha sido abonado. Se abonó un importe de {amount} el {credit_date}. La referencia bancaria es {bank_reference}.",
+    "pay_pending": "Finanzas aprobó su solicitud el {approval_date}. El pago está pendiente con el equipo de {owner}. Aún no hay fecha de pago disponible.",
+    "more_help": "¿Puedo ayudarle en algo más? Puede preguntar por otra solicitud.",
+    "unclear_retry": "Lo siento, no le he entendido. ¿Puede repetirlo?",
+    "final_goodbye": "Gracias por llamar a la línea de ayuda del Portal de Confianza para Empleados LTET. Adiós."
+  }
+}

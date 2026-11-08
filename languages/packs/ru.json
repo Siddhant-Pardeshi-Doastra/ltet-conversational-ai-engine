@@ -1,0 +1,25 @@
+{
+  "lang": "ru",
+  "name": "Русский",
+  "script": "Cyrillic",
+  "locale": "ru-RU",
+  "version": 1,
+  "status": "draft_translation",
+  "voice_provider": "browser_demo",
+  "catalogue": "extended",
+  "coverage_note": "Generated draft translation of core prompts (extended catalogue). Native-speaker approval pending. Missing keys fall back to English at runtime.",
+  "strings": {
+    "greeting": "Добро пожаловать на горячую линию портала доверия сотрудников LTET. Вы разговариваете с автоматизированным помощником, а не с живым оператором.",
+    "ask_enter_ps": "Пожалуйста, введите ваш номер PS на клавиатуре, цифру за цифрой.",
+    "otp_sent": "Я отправил код подтверждения на ваш зарегистрированный контакт, оканчивающийся на {ending}. Введите код с клавиатуры. В целях безопасности я не могу повторить его.",
+    "verification_success": "Спасибо. Ваша личность подтверждена.",
+    "claims_one_confirm": "У вас одно открытое требование, {claim_id}, по программе {scheme}. Хотите узнать его статус?",
+    "claim_stage_answer": "Ваше требование {claim_id} сейчас находится на этапе {stage}.",
+    "claim_approved_intro": "Ваше требование {claim_id} утверждено финансовым отделом.",
+    "pay_credited": "Платёж зачислен. Сумма {amount} зачислена {credit_date}. Банковская ссылка: {bank_reference}.",
+    "pay_pending": "Финансовый отдел одобрил ваше требование {approval_date}. Платёж в обработке у команды {owner}. Дата платежа пока неизвестна.",
+    "more_help": "Чем ещё могу помочь? Вы можете спросить о другом требовании.",
+    "unclear_retry": "Извините, я не расслышал. Повторите, пожалуйста.",
+    "final_goodbye": "Спасибо за звонок на горячую линию портала доверия сотрудников LTET. До свидания."
+  }
+}

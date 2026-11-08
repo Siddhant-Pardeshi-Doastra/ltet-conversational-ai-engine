@@ -1,6 +1,8 @@
 // Call Simulator: drives the deterministic voice engine via the same API the
-// telephony adapter uses. Includes the isolated DEMO mock SMS inbox (SEC-04).
+// telephony adapter uses. Includes the isolated verification-message inbox
+// (SEC-04) and the human-grade browser speech engine.
 import { api, esc, state } from '../app.js';
+import { voice, localeFor } from '../voice.js';
 
 let sim = { sessionId: null, busy: false, ttsOn: true, rate: 1, lang: 'auto' };
 let presets = [
@@ -16,10 +18,19 @@ let presets = [
 ];
 
 export async function renderSimulator(root, params = {}) {
-  const langNames = { auto: 'Auto-detect', en: 'English', hi: 'हिन्दी Hindi', bn: 'বাংলা', mr: 'मराठी', ta: 'தமிழ்', te: 'తెలుగు', gu: 'ગુજરાતી', pa: 'ਪੰਜਾਬੀ', ml: 'മലയാളം', kn: 'ಕನ್ನಡ', or: 'ଓଡ଼ିଆ', as: 'অসমীয়া' };
+  // Language catalogue from the platform (FRS core + extended), grouped.
+  let catalogue = { frs_core: [], extended: [] };
+  try {
+    catalogue = await api('GET', '/api/languages');
+  } catch { /* fallback below keeps the console usable */ }
+  const langName = (p) => `${p.name} (${p.lang.toUpperCase()})`;
+  const coreOpts = catalogue.frs_core.map((p) => `<option value="${esc(p.lang)}">${esc(langName(p))}${p.launch_ready ? '' : ' ·'}</option>`).join('');
+  const extOpts = catalogue.extended.map((p) => `<option value="${esc(p.lang)}">${esc(langName(p))} ·</option>`).join('');
+
   root.innerHTML = `
     <div class="sim-grid">
       <div class="phone" id="phone">
+        <div class="phone-statusbar"><span id="sb-time"></span><span class="sb-right">LTET LINE <span class="sb-bar"></span></span></div>
         <div class="phone-top"><span class="dot"></span><span id="phone-status">Ready — start a call</span>
           <span class="eq" id="voice-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
           <span class="grow"></span><span id="phone-lang"></span></div>
@@ -50,10 +61,18 @@ export async function renderSimulator(root, params = {}) {
           <label class="field"><span>Calling number (test line)</span><input type="text" id="caller-number" value="+91 55555 50001" /></label>
           <div class="btn-row">${presets.map((p, i) => `<button class="btn sm" data-preset="${i}">${esc(p.label)}</button>`).join('')}</div>
           <div class="mt flex">
-            <label class="field grow" style="margin:0"><span>Language</span>
-              <select id="sim-lang">${Object.entries(langNames).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('')}</select></label>
-            <label class="field" style="margin:0;width:110px"><span>TTS rate</span>
+            <label class="field grow" style="margin:0"><span>Language — <span id="lang-count"></span></span>
+              <select id="sim-lang">
+                <option value="auto">Auto-detect</option>
+                <optgroup label="Core catalogue">${coreOpts}</optgroup>
+                ${extOpts ? `<optgroup label="Extended catalogue">${extOpts}</optgroup>` : ''}
+              </select></label>
+            <label class="field" style="margin:0;width:110px"><span>Voice rate</span>
               <select id="sim-rate"><option value="0.85">0.85×</option><option value="1" selected>1×</option><option value="1.15">1.15×</option></select></label>
+          </div>
+          <div class="mt flex">
+            <label class="field grow" style="margin:0"><span>Assistant voice <span class="pill ok" id="voice-grade" style="margin-left:6px">—</span></span>
+              <select id="sim-voice"><option value="">Auto — most human available</option></select></label>
           </div>
           <div class="mt">
             <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="tts-on" checked /> Speak replies (browser TTS)</label>
@@ -75,8 +94,30 @@ export async function renderSimulator(root, params = {}) {
     </div>`;
 
   const $ = (s) => root.querySelector(s);
+  $('#sb-time').textContent = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
   if (params && params.number) $('#caller-number').value = params.number;
-  $('#sim-lang').addEventListener('change', (e) => { sim.lang = e.target.value; });
+  $('#lang-count').textContent = `${catalogue.frs_core.length + catalogue.extended.length} languages configured`;
+
+  // Voice engine: load device voices, populate the picker for the current language.
+  const refreshVoicePicker = () => {
+    const lang = sim.lang === 'auto' ? 'en' : sim.lang;
+    const sel = $('#sim-voice');
+    const current = sel.value;
+    const list = voice.voicesFor(lang);
+    sel.innerHTML = '<option value="">Auto — most human available</option>' +
+      list.slice(0, 8).map((v) => `<option value="${esc(v.voiceURI)}">${esc(v.name)}</option>`).join('');
+    if (current) sel.value = current;
+    const grade = $('#voice-grade');
+    if (!voice.supported) { grade.textContent = 'text mode'; grade.className = 'pill muted'; }
+    else if (voice.isHumanGrade(lang)) { grade.textContent = 'human-grade'; grade.className = 'pill ok'; }
+    else { grade.textContent = 'device voice'; grade.className = 'pill info'; }
+  };
+  voice.init().then(() => { refreshVoicePicker(); refreshVoicePicker(); /* second pass after voiceschanged */ });
+  if (typeof window.speechSynthesis !== 'undefined') {
+    window.speechSynthesis.onvoiceschanged = () => refreshVoicePicker();
+  }
+  $('#sim-lang').addEventListener('change', (e) => { sim.lang = e.target.value; refreshVoicePicker(); });
+  $('#sim-voice').addEventListener('change', (e) => { voice.prefer(sim.lang === 'auto' ? 'en' : sim.lang, e.target.value || null); });
   $('#sim-rate').addEventListener('change', (e) => { sim.rate = Number(e.target.value); });
   $('#tts-on').addEventListener('change', (e) => { sim.ttsOn = e.target.checked; });
 
@@ -122,7 +163,7 @@ export async function renderSimulator(root, params = {}) {
   }));
   $('#repeat-btn').addEventListener('click', () => event({ type: 'utterance', text: 'repeat' }));
   $('#slow-btn').addEventListener('click', () => event({ type: 'utterance', text: 'slower please' }));
-  $('#interrupt-btn').addEventListener('click', () => { try { speechSynthesis.cancel(); } catch { /* not supported */ } });
+  $('#interrupt-btn').addEventListener('click', () => voice.cancel());
 
   $('#mic-btn').addEventListener('click', () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -131,7 +172,7 @@ export async function renderSimulator(root, params = {}) {
       return;
     }
     const rec = new SR();
-    rec.lang = sim.lang === 'auto' ? 'en-IN' : ({ en: 'en-IN', hi: 'hi-IN', bn: 'bn-IN', mr: 'mr-IN', ta: 'ta-IN', te: 'te-IN', gu: 'gu-IN', pa: 'pa-IN', ml: 'ml-IN', kn: 'kn-IN', or: 'or-IN', as: 'as-IN' })[sim.lang] || 'en-IN';
+    rec.lang = localeFor(sim.lang === 'auto' ? 'en' : sim.lang);
     rec.interimResults = false;
     rec.onresult = (e) => { const t = e.results[0][0].transcript; $('#utter').value = t; sendUtterance(); };
     rec.onerror = () => { $('#phone-status').textContent = 'Speech recognition error — use typed utterances.'; };
@@ -175,18 +216,13 @@ export async function renderSimulator(root, params = {}) {
   }
 
   function speak(text, lang) {
-    if (!sim.ttsOn || !('speechSynthesis' in window)) return;
-    try {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = ({ en: 'en-IN', hi: 'hi-IN', bn: 'bn-IN', mr: 'mr-IN', ta: 'ta-IN', te: 'te-IN', gu: 'gu-IN', pa: 'pa-IN', ml: 'ml-IN', kn: 'kn-IN', or: 'or-IN', as: 'as-IN' })[lang] || 'en-IN';
-      u.rate = sim.rate;
-      const eq = root.querySelector('#voice-eq');
-      if (eq) {
-        u.onstart = () => eq.classList.add('on');
-        u.onend = u.onerror = () => eq.classList.remove('on');
-      }
-      speechSynthesis.speak(u);
-    } catch { /* TTS unavailable */ }
+    if (!sim.ttsOn) return;
+    const eq = root.querySelector('#voice-eq');
+    voice.speak(text, lang, {
+      rateMultiplier: sim.rate,
+      onStart: () => eq && eq.classList.add('on'),
+      onEnd: () => eq && eq.classList.remove('on'),
+    });
   }
 
   async function event(evt) {
