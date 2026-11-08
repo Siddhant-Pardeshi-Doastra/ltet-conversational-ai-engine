@@ -27,7 +27,9 @@
    (HMAC + nonce)       │────────────────────────────────────────────────│
                         │  Conversation engine (server/engine)           │
                         │   machine.js  deterministic state machine      │
-                        │   intents.js  no-key NLU (12 languages)        │
+                        │   conversation.js free-form understanding      │
+                        │   resolution.js exhaustive resolution search   │
+                        │   intents.js  no-key NLU (22 languages)        │
                         │   answers.js  fact-safe plans + validation     │
                         │────────────────────────────────────────────────│
                         │  Adapters (server/adapters)                    │

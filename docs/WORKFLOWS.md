@@ -13,6 +13,20 @@ trusted call event → create session → greeting + AI/recording notice (FR-47)
 → durable post-call work (log, history, summary, alerts)
 ```
 
+## Agent mode — free-form problem solving (roadmap addition)
+
+When a VERIFIED caller describes a reimbursement problem in free form ("I have
+been waiting for my money and still nothing has arrived"), the agent:
+1. acknowledges with empathy/urgency lines (deterministic templates),
+2. runs the EXHAUSTIVE resolution search over live data — credited →
+   delayed(+threshold, proactive flag) → failed/held(+recorded reason) →
+   pending-timeline → open query → stage guidance,
+3. speaks the first path that passes fact validation,
+4. only when every path is exhausted: transfers WITH FULL CONTEXT (reason +
+   attempted paths as an alert) so the client never repeats themselves.
+Unverified callers never reach the resolution engine. Simple keyword queries
+("payment status") keep the deterministic fast path.
+
 ## UC-01 — Claim status (employee)
 
 1. Greeting/notice → language.

@@ -12,7 +12,7 @@ focus work; answers depend on current portal data and must be auditable.
 
 - An **automated helpline assistant** that answers *verified* enquiries for
   claim status (UC-01), Finance payment information (UC-02) and listed
-  beneficiaries (UC-03) across **17 schemes** in **12 languages**.
+  beneficiaries (UC-03) across **17 schemes** in **22 languages**.
 - A **deterministic conversation engine** — every spoken fact is templated,
   fetched live from the portal, and validated against a fresh source snapshot
   before it is spoken. Nothing is invented; nothing unverified is disclosed.
@@ -57,7 +57,7 @@ not-configured statuses · durable outbox worker · no-build web console ·
 
 | Ready | Not yet (external) |
 |---|---|
-| Full Release 1 functional scope, tested | LTET API contracts + credentials |
+| Agent mode + exhaustive resolution search, tested | LTET API contracts + credentials |
 | Security boundaries + audit trails | Carrier/toll-free + failover |
 | Demo data, scenarios, reset tools | Native-speaker language sign-off |
 | CI (lint + tests, no paid keys) | Real-audio recognition metrics |

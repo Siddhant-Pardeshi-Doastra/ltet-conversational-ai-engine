@@ -1,7 +1,7 @@
 # Test Report — actual commands and results
 
 Environment: Windows 10 (win32), Node.js v22.22.0, npm 10.9.4. Date of last run:
-2026-11-05. No paid-provider keys used; all fixtures synthetic.
+2026-11-08. No paid-provider keys used; all fixtures synthetic.
 
 ## Commands and results
 
@@ -12,8 +12,8 @@ checked 42 files, 0 failures
 > npm test   (node --test tests/engine.test.js tests/conversation.test.js
               tests/security.test.js tests/postcall.test.js tests/api.test.js
               tests/live-mode.test.js)
-# tests 77
-# pass 77
+# tests 85
+# pass 85
 # fail 0
 ```
 
@@ -21,12 +21,12 @@ CI: `.github/workflows/ci.yml` repeats lint + tests + a seed reproducibility che
 on push/PR (Node 22, `npm ci`). CI status must be read from the GitHub Actions run
 for the pushed commit — the workflow file alone is not evidence of a pass.
 
-## Coverage by area (77 tests)
+## Coverage by area (85 tests)
 
 | Suite | Focus | Highlights |
 |---|---|---|
-| engine (14) | intent parsing, languages, fact validation, money | all 12 script detections; Hindi-English code-switch with CLM capture; leading-zero digit groups; Devanagari ordinals/numbers; tampered-slot validation blocked; ₹ Indian grouping |
-| conversation (20) | BDD-mapped flows | greeting/notice; masked confirmation; OTP still required after confirm; keypad PS + read-back; OTP lockout; spoken-OTP refusal + redaction; one/many claims + batches; stage+query; credited (approval first); pending (no date); failed (+PMS alert); held; unmapped; missing fields; non-approved; dispute; refusal; language switch; recognition failures; cap; zero claims; abandoned; busy+callback; portal outage; Finance outage |
+| engine (17) | intent parsing, languages, fact validation, money | all 12 script detections; Hindi-English code-switch with CLM capture; leading-zero digit groups; Devanagari ordinals/numbers; tampered-slot validation blocked; ₹ Indian grouping |
+| conversation (25) | BDD-mapped flows | greeting/notice; masked confirmation; OTP still required after confirm; keypad PS + read-back; OTP lockout; spoken-OTP refusal + redaction; one/many claims + batches; stage+query; credited (approval first); pending (no date); failed (+PMS alert); held; unmapped; missing fields; non-approved; dispute; refusal; language switch; recognition failures; cap; zero claims; abandoned; busy+callback; portal outage; Finance outage |
 | security (12) | SEC-01..07 | impostor denied; scoped grant; limited-field grant; revoked grant; landline no-SMS; metadata without contact changes; hash-only OTP; replay rejected; failed verification never attaches history; webhook sig/stale/replay; transcript RBAC + audit; role switcher gating; cross-queue 403; unsafe policy 422; OTP rate limit |
 | postcall (8) | durability | exactly-once log/history; duplicate webhook + job replay; crash recovery; alert dedupe across calls; analytics reconciliation; daily/weekly reports; governed retention; policy draft→approve→publish→rollback |
 | api (7) | surface | auth; health/readiness honesty; 401s; stage-scoped claim context; PS masking everywhere; search+tags; demo tools demo-only |
@@ -51,7 +51,10 @@ for the pushed commit — the workflow file alone is not evidence of a pass.
 8. Out-of-scope mutation requests ("approve my claim") were routed to selection —
    now answered with the scope explanation (FR-24).
 9. Document-history text lacked the claim id. Fixed.
-10. Various test-harness defects (call signature, session leakage, OTP rate-limit
+10. Agent-mode interception initially captured simple keyword queries ("payment status");
+    the gate now triggers only on free-form problem descriptions. Unverified callers
+    were verified to never reach the resolution engine (dedicated test).
+11. Various test-harness defects (call signature, session leakage, OTP rate-limit
     isolation) that had been masking the real behaviour above.
 
 ## Not validated here — external acceptance pending

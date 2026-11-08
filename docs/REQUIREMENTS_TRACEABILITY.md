@@ -17,6 +17,15 @@ Priority preserved: M = Must, S = Should.
 
 ## UC-01 / UC-02 / UC-03 coverage
 
+**Agent mode (product-roadmap addition):** free-form caller speech is interpreted
+(`server/engine/conversation.js`) and served by an exhaustive reimbursement-
+resolution search (`server/engine/resolution.js`) that walks every resolvable
+path against live data — credited, delayed, failed/held, pending, query,
+stage — with a context-carrying human transfer only when all paths are
+exhausted. Factual safety is unchanged: every spoken line is validated.
+Language catalogue: **12 FRS-core + 10 extended packs = 22** (draft translations
+pending native-speaker sign-off; only English is native-approved).
+
 | UC | Flow | Where |
 |---|---|---|
 | UC-01 Claim status | `server/engine/machine.js` (`loadClaims`, `narrateClaims`, `answerClaim`), `server/engine/answers.js` | tests/conversation.test.js |

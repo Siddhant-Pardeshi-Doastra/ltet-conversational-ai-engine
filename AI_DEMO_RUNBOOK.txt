@@ -40,8 +40,8 @@ as "the platform ships with its own managed dataset for demonstrations".
   trail. Callers who only "know a PS number" are denied.
 - Post-call: durable outbox worker creates the immutable call log, claim-linked
   document history, structured English summary, processor alerts, analytics.
-- 12 languages configured (English + 11 Indic); Hindi/English code-switching
-  works in the demo.
+- 22 languages configured (12 FRS-core + 10 extended, e.g. Spanish, Arabic,
+  Chinese, Japanese); Hindi/English code-switching works in the demo.
 
 --------------------------------------------------------------------------------
 3. PREREQUISITES
@@ -126,6 +126,26 @@ STEP 1 - Verified employee enquiry (credited payment)      [3 min]
   Talking point: every spoken figure came from the data service and was
   re-validated against a fresh snapshot before being spoken.
 
+STEP 1b - AGENT MODE: free-form speech (the headline moment) [2 min]
+  Still with Vikram (verified):
+  - Toggle "🎙 Live voice: On" — the agent listens continuously (a "Listening…"
+    chip appears; it stands down while the agent speaks and resumes after).
+  - Speak or type naturally, no menu keywords:
+      "I have been waiting for my money and still nothing has arrived,
+       this is really frustrating"
+    -> The agent acknowledges with empathy, runs an EXHAUSTIVE resolution
+       search against live data (credited-inform path) and answers with the
+       authoritative amount/date/reference. Keyword menus never appear.
+  - Variation with a delayed payment (enable the delay_payment drill first,
+    preset "Credited payment (Vikram)" or +91 55555 50005):
+      "it has been weeks and the money is still not here"
+    -> delay explained with the service threshold, payments team flagged with
+       priority, human transfer offered.
+  - If the search exhausts every automated path (enable portal_outage drill):
+      "my reimbursement has a problem, please help"
+    -> transparent "this needs a human" + transfer with FULL CONTEXT — the
+       caller never repeats themselves.
+
 STEP 2 - Processing stage + open processor query           [1 min]
   - Preset "Linked employee (Priya, query claim)" -> Start call -> yes -> yes ->
     keypad OTP -> type: claim status
@@ -180,8 +200,10 @@ Hindi moment (optional, impressive): at any prompt type
 --------------------------------------------------------------------------------
 7. CLOSING TALKING POINTS
 --------------------------------------------------------------------------------
-- Deterministic engine, not a chatbot: a state machine with validated factual
-  templates - the model layer can never invent amounts, dates or statuses.
+- An agent, not an IVR: free-form speech in, exhaustive resolution search over
+  live data, human transfer only after every automated path is exhausted - and
+  the transfer carries full context. Factual templates stay validated: the
+  model layer can never invent amounts, dates or statuses.
 - Security by design: caller-ID match or knowing a PS number never grants
   access; OTP goes only to the registered channel; beneficiary access requires
   a previously verified binding plus an explicit scoped grant.
