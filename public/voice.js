@@ -1,17 +1,19 @@
-// Human-grade browser speech engine.
+// Human-grade browser speech engine (v2 — soft & attractive).
 //
-// What makes it sound more like a real person:
-//  1. BEST-VOICE SELECTION — device voices are ranked per language: exact locale
-//     match first, then neural/natural voices ("Natural", "Neural", "Online")
-//     which are the human-sounding ones shipped in Edge/Chrome, then Google /
-//     Microsoft network voices, falling back gracefully to any voice.
-//  2. SENTENCE-CADENCE CHUNKING — replies are split into sentences and queued as
-//     separate utterances with a short breath between them, matching how people
-//     actually talk, instead of one flat robotic stream.
-//  3. PER-LANGUAGE PROSODY — base rate/pitch tuned per language so Indic and
-//     CJK speech doesn't sound rushed or flat.
-//  4. USER CONTROL — the simulator exposes a voice picker (most human voices
-//     listed first) and a rate control.
+// What makes it sound like a warm human agent:
+//  1. BEST-VOICE SELECTION — device voices ranked per language: exact locale,
+//     then neural/natural voices ("Natural", "Neural", "Online"), then Google /
+//     Microsoft network voices.
+//  2. SPEECH NORMALIZATION — currency, claim IDs and bank references are
+//     rewritten the way a human agent reads them ("₹24,500.00" → "24,500
+//     rupees", "CLM-10020" → "C L M 1 0 0 2 0"), so nothing sounds robotic.
+//  3. PHRASE-LEVEL CADENCE — replies breathe: short pause at commas, longer at
+//     sentence ends, and the final sentence is spoken slightly slower
+//     (natural sentence-final lengthening).
+//  4. SOFT DELIVERY — volume just under full, gentle attack on the first
+//     phrase, per-language rate/pitch tuned for calm warmth.
+//  5. VOICE STYLES — Warm (default) / Standard / Crisp.
+//  6. USER CONTROL — voice picker (most human first) + fine rate trim.
 
 const LANG_LOCALES = {
   en: 'en-IN', hi: 'hi-IN', bn: 'bn-IN', mr: 'mr-IN', ta: 'ta-IN', te: 'te-IN',
@@ -20,16 +22,23 @@ const LANG_LOCALES = {
   zh: 'zh-CN', ja: 'ja-JP', ru: 'ru-RU', id: 'id-ID',
 };
 
-// Per-language prosody (rate, pitch) — tuned so each language sounds unhurried.
+const CURRENCY_WORD = { en: 'rupees', hi: 'रुपये', bn: 'টাকা', mr: 'रुपये', ta: 'ரூபாய்', te: 'రూపాయలు', gu: 'રૂપિયા', pa: 'ਰੁਪਏ', ml: 'രൂപ', kn: 'ರೂಪಾಯಿ', or: 'ଟଙ୍କା', as: 'টকা', ur: 'روپے', id: 'rupiah', pt: 'reais' };
+
 const PROSODY = {
-  en: { rate: 0.97, pitch: 1.0 }, hi: { rate: 0.94, pitch: 1.0 }, bn: { rate: 0.94, pitch: 1.0 },
-  mr: { rate: 0.94, pitch: 1.0 }, ta: { rate: 0.93, pitch: 1.0 }, te: { rate: 0.93, pitch: 1.0 },
-  gu: { rate: 0.94, pitch: 1.0 }, pa: { rate: 0.94, pitch: 1.0 }, ml: { rate: 0.93, pitch: 1.0 },
-  kn: { rate: 0.93, pitch: 1.0 }, or: { rate: 0.94, pitch: 1.0 }, as: { rate: 0.94, pitch: 1.0 },
-  ur: { rate: 0.93, pitch: 1.0 }, ar: { rate: 0.94, pitch: 1.0 }, es: { rate: 0.98, pitch: 1.02 },
-  fr: { rate: 0.97, pitch: 1.02 }, de: { rate: 0.96, pitch: 1.0 }, pt: { rate: 0.97, pitch: 1.02 },
-  zh: { rate: 0.92, pitch: 1.02 }, ja: { rate: 0.94, pitch: 1.0 }, ru: { rate: 0.96, pitch: 1.0 },
-  id: { rate: 0.97, pitch: 1.02 },
+  en: { rate: 0.95, pitch: 1.0 }, hi: { rate: 0.9, pitch: 1.0 }, bn: { rate: 0.91, pitch: 1.0 },
+  mr: { rate: 0.91, pitch: 1.0 }, ta: { rate: 0.9, pitch: 1.0 }, te: { rate: 0.9, pitch: 1.0 },
+  gu: { rate: 0.91, pitch: 1.0 }, pa: { rate: 0.91, pitch: 1.0 }, ml: { rate: 0.9, pitch: 1.0 },
+  kn: { rate: 0.9, pitch: 1.0 }, or: { rate: 0.91, pitch: 1.0 }, as: { rate: 0.91, pitch: 1.0 },
+  ur: { rate: 0.9, pitch: 1.0 }, ar: { rate: 0.91, pitch: 1.0 }, es: { rate: 0.95, pitch: 1.02 },
+  fr: { rate: 0.94, pitch: 1.02 }, de: { rate: 0.93, pitch: 1.0 }, pt: { rate: 0.94, pitch: 1.02 },
+  zh: { rate: 0.89, pitch: 1.02 }, ja: { rate: 0.91, pitch: 1.0 }, ru: { rate: 0.93, pitch: 1.0 },
+  id: { rate: 0.94, pitch: 1.02 },
+};
+
+const STYLES = {
+  warm: { rate: 0.94, phraseBreathMs: 90, sentenceBreathMs: 200, volume: 0.96 },
+  standard: { rate: 1.0, phraseBreathMs: 70, sentenceBreathMs: 150, volume: 0.98 },
+  crisp: { rate: 1.09, phraseBreathMs: 50, sentenceBreathMs: 110, volume: 1.0 },
 };
 
 const state = {
@@ -47,14 +56,13 @@ function scoreVoice(v, lang) {
   let s = 0;
   if (vl === locale.toLowerCase()) s += 100;
   else if (vl.startsWith(langPrefix)) s += 50;
-  else if (locale.startsWith(vl.split('-')[0]) && vl.split('-')[0] === langPrefix) s += 50;
-  else return -1; // wrong language entirely
-  if (/natural|neural/i.test(name)) s += 46; // Edge/Chrome human-sounding voices
-  if (/online/i.test(name)) s += 8; // network natural voices
+  else return -1;
+  if (/natural|neural/i.test(name)) s += 46;
+  if (/online/i.test(name)) s += 8;
   if (/google/i.test(name)) s += 30;
   if (/microsoft/i.test(name)) s += 14;
-  if (v.localService) s += 4; // slight preference for offline reliability on ties
-  if (/compact|espeak/i.test(name)) s -= 25; // last-resort robotic voices
+  if (v.localService) s += 4;
+  if (/compact|espeak/i.test(name)) s -= 25;
   return s;
 }
 
@@ -67,10 +75,42 @@ function loadVoices() {
   }
 }
 
-export const voice = {
-  supported: 'speechSynthesis' in window,
+/** Rewrite text so TTS reads it like a human agent would. Display text is untouched. */
+export function normalizeForSpeech(text, lang = 'en') {
+  let t = String(text ?? '');
+  // Currency: "₹24,500.00" -> "24,500 rupees" (drop .00; use the language's word)
+  const cur = CURRENCY_WORD[lang] || CURRENCY_WORD.en;
+  t = t.replace(/₹\s?([0-9][0-9,]*(?:\.[0-9]{1,2})?)/g, (_m, num) => `${num.replace(/\.00$/, '')} ${cur}`);
+  // Claim IDs: "CLM-10020" -> "C L M 1 0 0 2 0" (deliberate reference reading)
+  t = t.replace(/\bCLM[\s-]?([0-9]{3,8})\b/gi, (_m, digits) => `C L M ${digits.split('').join(' ')}`);
+  // Bank references and similar codes: space out letter-runs and digit-runs
+  t = t.replace(/\b([A-Z]{3,10})([0-9]{4,12})\b/g, (_m, a, b) => `${a.split('').join(' ')} ${b.split('').join(' ')}`);
+  // Tidy double spaces created by the above
+  return t.replace(/\s{2,}/g, ' ').trim();
+}
 
-  /** Resolve device voices; resolves immediately if already loaded. */
+/** Sentence chunks with phrase-level sub-splitting for soft cadence. */
+export function chunkSoft(text) {
+  const sentences = String(text)
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?。！？।؟…])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const out = [];
+  for (const sentence of sentences) {
+    if (sentence.length > 70) {
+      const parts = sentence.split(/(?<=,|;|、|،)\s+/).map((p) => p.trim()).filter(Boolean);
+      parts.forEach((p, i) => out.push({ text: i < parts.length - 1 ? p.replace(/[,;、،]$/, '') + (/[،,;]$/.test(p) ? ',' : '') : p, pause: i < parts.length - 1 ? 'phrase' : 'sentence' }));
+    } else {
+      out.push({ text: sentence, pause: 'sentence' });
+    }
+  }
+  return out;
+}
+
+export const voice = {
+  get supported() { return typeof window !== 'undefined' && 'speechSynthesis' in window; },
+
   init() {
     if (!this.supported) return Promise.resolve([]);
     if (state.loaded) return Promise.resolve(state.voices);
@@ -78,7 +118,6 @@ export const voice = {
       state.listeners.push(resolve);
       loadVoices();
       window.speechSynthesis.onvoiceschanged = loadVoices;
-      // Some engines populate lazily; poll briefly as a fallback.
       let tries = 0;
       const poll = setInterval(() => {
         loadVoices();
@@ -88,7 +127,6 @@ export const voice = {
     });
   },
 
-  /** Ranked voice list for a language (most human first). */
   voicesFor(lang) {
     return state.voices
       .map((v) => ({ v, s: scoreVoice(v, lang) }))
@@ -107,7 +145,6 @@ export const voice = {
     return !!b && /natural|neural|google/i.test(b.name);
   },
 
-  /** User voice preference (voiceURI) per language. */
   prefer(lang, voiceURI) {
     if (voiceURI) state.preference[lang] = voiceURI;
     else delete state.preference[lang];
@@ -122,57 +159,58 @@ export const voice = {
     return this.best(lang);
   },
 
-  /** Split reply text into sentence chunks with multilingual terminators. */
+  /** Sentence chunks (kept for compatibility/testing). */
   chunk(text) {
-    return String(text)
-      .replace(/\s+/g, ' ')
-      .split(/(?<=[.!?。！？।؟…])\s+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+    return chunkSoft(text).map((c) => c.text);
   },
 
-  /**
-   * Speak with human cadence: one utterance per sentence, a short breath
-   * between sentences, per-language prosody, best available voice.
-   * Chained via onend so the queue breathes naturally; a cancellation token
-   * stops the chain instantly (barge-in / interrupt / new reply).
-   */
   _seq: 0,
+
+  /**
+   * Soft, human speech: normalized text, phrase cadence with variable breaths,
+   * sentence-final slowing, gentle volume. Cancellation-token guarded.
+   */
   speak(text, lang, opts = {}) {
     const synth = this.supported ? window.speechSynthesis : null;
     if (!synth) { opts.onEnd?.(); return; }
     const token = ++this._seq;
+    const style = STYLES[opts.style || 'warm'] || STYLES.warm;
     const pros = PROSODY[lang] || PROSODY.en;
-    const rate = Math.max(0.5, Math.min(1.6, pros.rate * (opts.rateMultiplier || 1)));
-    const chunks = this.chunk(text);
-    if (!chunks.length) { opts.onEnd?.(); return; }
+    const rate = Math.max(0.5, Math.min(1.5, pros.rate * style.rate * (opts.rateMultiplier || 1)));
+    const spoken = normalizeForSpeech(text, lang);
+    const parts = chunkSoft(spoken);
+    if (!parts.length) { opts.onEnd?.(); return; }
     const chosen = this.chosen(lang);
     let started = false;
     let i = 0;
     const speakNext = () => {
-      if (token !== this._seq) return; // cancelled
-      if (i >= chunks.length) { opts.onEnd?.(); return; }
-      const chunk = chunks[i++];
-      const u = new SpeechSynthesisUtterance(chunk);
+      if (token !== this._seq) return;
+      if (i >= parts.length) { opts.onEnd?.(); return; }
+      const part = parts[i++];
+      const isLast = i >= parts.length;
+      const u = new SpeechSynthesisUtterance(part.text);
       u.lang = chosen ? chosen.lang : (LANG_LOCALES[lang] || 'en-IN');
       if (chosen) u.voice = chosen;
-      u.rate = rate;
+      // sentence-final lengthening: the closing phrase is a touch slower
+      u.rate = Math.max(0.5, Math.min(1.5, rate * (isLast && parts.length > 1 ? 0.96 : 1)));
       u.pitch = pros.pitch;
+      u.volume = i === 1 ? style.volume - 0.03 : style.volume; // gentle attack
       u.onstart = () => { if (!started) { started = true; opts.onStart?.(); } };
       u.onend = u.onerror = () => {
         if (token !== this._seq) return;
-        if (i < chunks.length) setTimeout(speakNext, 140); // breath between sentences
-        else opts.onEnd?.();
+        if (i < parts.length) {
+          const breath = parts[i - 1].pause === 'phrase' ? style.phraseBreathMs : style.sentenceBreathMs;
+          setTimeout(speakNext, breath);
+        } else opts.onEnd?.();
       };
       synth.speak(u);
     };
     speakNext();
-    // Safety: engines that never fire onstart (muted autoplay) must not wedge UI state.
     setTimeout(() => { if (token === this._seq && !started) opts.onEnd?.(); }, 4000);
   },
 
   cancel() {
-    this._seq += 1; // stop any chained speech
+    this._seq += 1;
     if (this.supported) { try { window.speechSynthesis.cancel(); } catch { /* ignore */ } }
   },
 };

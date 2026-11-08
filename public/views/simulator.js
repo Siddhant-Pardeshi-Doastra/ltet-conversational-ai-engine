@@ -5,7 +5,7 @@ import { api, esc, state } from '../app.js';
 import { voice, localeFor } from '../voice.js';
 import { LiveMic } from '../mic.js';
 
-let sim = { sessionId: null, busy: false, ttsOn: true, rate: 1, lang: 'auto', state: null };
+let sim = { sessionId: null, busy: false, ttsOn: true, rate: 1, lang: 'auto', state: null, style: 'warm' };
 let presets = [
   { label: 'Linked employee (Arjun, 7 claims)', number: '+91 55555 50001' },
   { label: 'Linked employee (Priya, query claim)', number: '+91 55555 50002' },
@@ -70,8 +70,10 @@ export async function renderSimulator(root, params = {}) {
                 <optgroup label="Core catalogue">${coreOpts}</optgroup>
                 ${extOpts ? `<optgroup label="Extended catalogue">${extOpts}</optgroup>` : ''}
               </select></label>
-            <label class="field" style="margin:0;width:110px"><span>Voice rate</span>
-              <select id="sim-rate"><option value="0.85">0.85×</option><option value="1" selected>1×</option><option value="1.15">1.15×</option></select></label>
+            <label class="field" style="margin:0;width:130px"><span>Voice style</span>
+              <select id="sim-style"><option value="warm" selected>Warm & soft</option><option value="standard">Standard</option><option value="crisp">Crisp</option></select></label>
+            <label class="field" style="margin:0;width:96px"><span>Fine trim</span>
+              <select id="sim-rate"><option value="0.9">0.9×</option><option value="1" selected>1×</option><option value="1.1">1.1×</option></select></label>
           </div>
           <div class="mt flex">
             <label class="field grow" style="margin:0"><span>Assistant voice <span class="pill ok" id="voice-grade" style="margin-left:6px">—</span></span>
@@ -130,6 +132,7 @@ export async function renderSimulator(root, params = {}) {
   }
   $('#sim-lang').addEventListener('change', (e) => { sim.lang = e.target.value; refreshVoicePicker(); });
   $('#sim-voice').addEventListener('change', (e) => { voice.prefer(sim.lang === 'auto' ? 'en' : sim.lang, e.target.value || null); });
+  $('#sim-style').addEventListener('change', (e) => { sim.style = e.target.value; });
   $('#sim-rate').addEventListener('change', (e) => { sim.rate = Number(e.target.value); });
   $('#tts-on').addEventListener('change', (e) => { sim.ttsOn = e.target.checked; });
 
@@ -278,6 +281,7 @@ export async function renderSimulator(root, params = {}) {
     // Echo-aware turn-taking: the mic stands down while the agent speaks.
     if (mic && mic.active) mic.pause();
     voice.speak(text, lang, {
+      style: sim.style,
       rateMultiplier: sim.rate,
       onStart: () => { eq && eq.classList.add('on'); setTurn('speaking'); },
       onEnd: () => {

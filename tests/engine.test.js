@@ -232,3 +232,30 @@ test('acknowledge: deterministic template lines only, no invented facts', () => 
     }
   }
 });
+
+
+// ---- voice speech normalization + cadence (public/voice.js, pure functions) ----
+const { normalizeForSpeech, chunkSoft } = await import('../public/voice.js');
+
+test('speech normalization: currency reads naturally per language', () => {
+  assert.equal(normalizeForSpeech('An amount of ₹24,500.00 was credited.', 'en'), 'An amount of 24,500 rupees was credited.');
+  assert.equal(normalizeForSpeech('₹15,600.00 की राशि जमा हुई।', 'hi'), '15,600 रुपये की राशि जमा हुई।');
+  assert.ok(normalizeForSpeech('₹1,234.56 credited', 'en').includes('1,234.56 rupees'), 'paise preserved when non-zero');
+});
+
+test('speech normalization: reference codes read like a human agent', () => {
+  const out = normalizeForSpeech('Your claim CLM-10020 has been approved. The bank reference is MOCKBANK0045678.', 'en');
+  assert.ok(out.includes('C L M 1 0 0 2 0'), 'claim id digit-spaced for clarity');
+  assert.ok(out.includes('M O C K B A N K 0 0 4 5 6 7 8'), 'bank reference letter/digit runs spaced');
+  // accuracy guard: every original digit survives normalization
+  assert.ok(out.replace(/\s/g, '').includes('10020'), 'digits unchanged');
+});
+
+test('cadence: sentences and phrases carry breath markers for the speech chain', () => {
+  const parts = chunkSoft('Finance approved your claim on 10 October 2026. The payment is pending with the Finance Disbursement team, and no payment date is available yet.');
+  assert.equal(parts.length, 3);
+  assert.equal(parts[0].pause, 'sentence');
+  assert.equal(parts[1].pause, 'phrase', 'comma gets a phrase breath');
+  assert.equal(parts[2].pause, 'sentence');
+  assert.ok(parts.every((p) => p.text.length > 0));
+});
