@@ -432,3 +432,61 @@ select optgroup { font-weight: 700; color: var(--navy-600); }
   color: #9ed8cf; align-self: flex-end; font-style: italic; font-size: 12.5px;
 }
 .btn.live-on { background: var(--teal-600); color: #fff; border-color: var(--teal-600); box-shadow: 0 0 0 3px rgba(20, 145, 155, 0.18); }
+
+/* =====================================================================
+   Bold visual pass v1.2 — eye-catching, still enterprise
+   ===================================================================== */
+body {
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(20, 145, 155, 0.07), transparent 60%),
+    radial-gradient(900px 420px at -10% 30%, rgba(29, 63, 95, 0.06), transparent 55%),
+    var(--bg);
+}
+
+/* gradient display numbers — the KPI hero moment */
+.kpi .value {
+  font-size: 30px; font-weight: 800; letter-spacing: -0.8px;
+  background: linear-gradient(120deg, var(--navy-800) 20%, var(--teal-600) 75%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: var(--teal-600);
+}
+
+/* hero: bold frame (masked conic ring removed - painted over the hero in some Chromium builds) */
+.hero { border-radius: 20px; box-shadow: 0 14px 40px rgba(11,31,51,.35), 0 0 0 1.5px rgba(20,145,155,.35), 0 0 34px rgba(20,145,155,.22); }
+.hero h2 { font-size: 27px; font-weight: 800; letter-spacing: -0.3px; text-shadow: 0 2px 18px rgba(0,0,0,.35); }
+
+/* sidebar: deep gradient + brand glow + glowing active item */
+.sidebar { background: linear-gradient(180deg, #081726 0%, var(--navy-900) 40%, #0c2740 100%); }
+.brand {
+  font-size: 16px; font-weight: 800;
+  background: linear-gradient(100deg, #ffffff 30%, #6fd6cc 75%, #2b6cb0);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.nav-item.active { box-shadow: 0 6px 18px rgba(20, 145, 155, 0.35); }
+
+/* card top accent: teal bar grows on hover */
+.card { position: relative; }
+.card::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: linear-gradient(90deg, var(--teal-500), #2b6cb0);
+  transform: scaleX(0); transform-origin: left; transition: transform 0.35s var(--ease-out-soft);
+  pointer-events: none;
+}
+.card:hover::before { transform: scaleX(1); }
+.card .card-h h3 { font-weight: 750; letter-spacing: -0.1px; }
+.card .card-h::after {
+  content: ""; display: inline-block; width: 26px; height: 4px; border-radius: 4px;
+  background: linear-gradient(90deg, var(--teal-500), #2b6cb0); margin-left: 10px; vertical-align: middle;
+}
+
+/* topbar title bolder + badge glow */
+.topbar h1 { font-weight: 800; font-size: 19px; letter-spacing: -0.2px; }
+.badge.online { box-shadow: 0 0 0 3px rgba(20, 145, 155, 0.12), 0 2px 10px rgba(20, 145, 155, 0.25); }
+
+/* primary button: deeper glow */
+.btn.primary { box-shadow: 0 6px 18px var(--teal-glow); font-weight: 700; }
+.btn.danger { font-weight: 700; }
+
+/* tables: bolder headers */
+.table th { color: var(--navy-600); font-weight: 750; }

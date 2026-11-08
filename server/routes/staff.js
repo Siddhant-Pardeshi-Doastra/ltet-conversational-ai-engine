@@ -131,7 +131,7 @@ r.get('/claims/:id/context', (req, res) => {
     payment: payment || null,
     document_history: history,
     call_entries: callEntries,
-    source_note: 'mock LTET portal (synthetic demo data); freshness = portal updated_at',
+    source_note: 'platform data service; freshness = record updated_at',
     payment_freshness: payment?.updated_at || null,
   });
 });

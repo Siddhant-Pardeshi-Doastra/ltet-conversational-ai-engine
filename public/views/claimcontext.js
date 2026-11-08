@@ -34,7 +34,6 @@ export async function renderClaimContext(root) {
       alert(e.payload?.error === 'claim_outside_your_stage_scope' ? 'This claim is outside your stage scope.' : e.message);
       return;
     }
-    const w = window.open('', '_blank');
     const d = document.createElement('div');
     d.innerHTML = detailHtml(c);
     document.body.appendChild(d);

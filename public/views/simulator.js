@@ -5,7 +5,7 @@ import { api, esc, state } from '../app.js';
 import { voice, localeFor } from '../voice.js';
 import { LiveMic } from '../mic.js';
 
-let sim = { sessionId: null, busy: false, ttsOn: true, rate: 1, lang: 'auto' };
+let sim = { sessionId: null, busy: false, ttsOn: true, rate: 1, lang: 'auto', state: null };
 let presets = [
   { label: 'Linked employee (Arjun, 7 claims)', number: '+91 55555 50001' },
   { label: 'Linked employee (Priya, query claim)', number: '+91 55555 50002' },
@@ -292,7 +292,14 @@ export async function renderSimulator(root, params = {}) {
     if (!sim.sessionId) { alert('Start a call first.'); return; }
     if (sim.busy) return;
     if (evt.type === 'utterance') addLocal('Caller', evt.text, 'caller');
-    if (evt.type === 'keypad') addLocal('Keypad', evt.digits === '*' ? '*' : `pressed ${evt.digits}`, 'keypad');
+    if (evt.type === 'keypad') {
+      // SEC-04 in the UI too: verification codes never display in the
+      // conversation view, even as keypresses. Other keypad entries (PS,
+      // claim selection) are shown as pressed.
+      const duringChallenge = sim.state === 'challenge_pending';
+      addLocal('Keypad', evt.digits === '*' ? '*'
+        : duringChallenge ? 'entered code (hidden)' : `pressed ${evt.digits}`, 'keypad');
+    }
     sim.busy = true;
     try {
       const r = await api('POST', `/api/calls/${sim.sessionId}/events`, evt);
@@ -309,6 +316,7 @@ export async function renderSimulator(root, params = {}) {
 
   function applySession(s) {
     const chip = $('#state-chip');
+    sim.state = s.state;
     chip.textContent = s.state;
     $('#phone-lang').textContent = `lang: ${s.language || 'en'}`;
     $('#phone-status').innerHTML = s.state === 'ended'

@@ -59,7 +59,10 @@ export async function renderAdmin(root) {
       </div></div>`;
 
     const $ = (s) => root.querySelector(s);
-    $('#edit-policy').addEventListener('click', () => { /* textarea already holds published doc */ });
+    $('#edit-policy').addEventListener('click', () => {
+      $('#policy-doc').value = JSON.stringify(stripPrivate(policy.published), null, 2);
+      $('#policy-msg').innerHTML = '<div class="note info">Editor reset to the published policy — adjust values, then save as draft.</div>';
+    });
     $('#validate').addEventListener('click', async () => {
       try {
         const doc = JSON.parse($('#policy-doc').value);
