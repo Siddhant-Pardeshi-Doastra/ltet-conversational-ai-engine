@@ -3,7 +3,7 @@
   "name": "English",
   "script": "Latin",
   "locale": "en-IN",
-  "version": 1,
+  "version": 2,
   "status": "native_approved",
   "voice_provider": "browser_demo",
   "strings": {
@@ -59,6 +59,13 @@
     "beneficiary_lookup_fail": "Sorry, I could not verify that record. Let us try once more. Please enter the employee's PS number again.",
     "call_duration_wrap": "We are approaching the end of the time available for this call. Is there anything urgent I can help with, or shall I arrange a callback?",
     "portal_unavailable": "I am sorry, the claim service is not responding right now, so I cannot fetch claim details. This has been logged. Would you like a human agent, or a callback?",
-    "general_failure": "I am sorry, something went wrong on this call. Would you like a human agent, or a callback?"
+    "general_failure": "I am sorry, something went wrong on this call. Would you like a human agent, or a callback?",
+    "agent_resolved_missing_money": "I can confirm the payment for {claim_id} has been credited, as I mentioned. If it is not yet visible in your account, please check with your bank using the reference I provided, or I can connect you to a human agent.",
+    "agent_delay_plan": "Your payment for {claim_id} has been waiting {days} days since Finance approval, which is beyond our {threshold}-day service threshold. I have flagged this to the payments team with priority. Would you like me to connect you to a human agent right away?",
+    "agent_failure_next_step": "Based on the recorded reason — {reason} — the next step sits with the payments team. I have flagged this for them with the details from this call. Would you like me to transfer you to a human agent now?",
+    "agent_stage_meaning": "Here is exactly where things stand:",
+    "agent_stage_guidance": "At the {stage} stage, {guidance}.",
+    "agent_transfer_search": "I have checked everything I can reach on my side, but this needs a human to resolve. I am transferring you now with full context — you will not need to repeat anything.",
+    "agent_escalation_offer": "I can also connect you to a human agent right now. Just say agent."
   }
 }

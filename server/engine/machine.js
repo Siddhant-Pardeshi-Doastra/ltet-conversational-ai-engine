@@ -15,6 +15,8 @@ import * as portal from '../adapters/portal.js';
 import { createChallenge, verifyChallenge, resendChallenge, hasActiveChallenge } from '../adapters/otp.js';
 import { buildClaimStagePlan, buildPaymentPlans, validateAndRender } from './answers.js';
 import { raiseAlert } from '../services/alerts.js';
+import { interpret, acknowledge, wrapLine } from './conversation.js';
+import { runResolutionSearch } from './resolution.js';
 import { nowIso } from '../util.js';
 
 export const STATES = [
@@ -182,6 +184,53 @@ export function handleEvent(session, event, { policy }) {
   let p = null;
   if (event.type === 'utterance') {
     p = parseUtterance(event.text);
+    // Conversational layer: structured understanding of free-form speech
+    ctx.lastUnderstanding = interpret(event.text, { state });
+    const u = ctx.lastUnderstanding;
+
+    // --- AGENT MODE: free-form reimbursement problem -> exhaustive resolution ---
+    // Runs before keyword menus whenever a verified caller describes an issue.
+    const SPECIFIC_ISSUES = ['payment_missing', 'payment_delay', 'payment_failed', 'amount_issue', 'documents', 'query_help'];
+    const freeformProblem = u.isIssue && (SPECIFIC_ISSUES.includes(u.kind)
+      || u.sentiment === 'distressed'
+      || u.urgency === 'high')
+      && !p.intents.mutation && !p.intents.stop
+      && !(u.kind === 'status' && p.intents.status);
+    if (freeformProblem && ctx.verification && !p.intents.dispute && !p.intents.human
+        && ['claims_selection', 'claim_answer', 'more_help', 'no_claims', 'claim_cap'].includes(state)) {
+      const ack = acknowledge(u, session.language || 'en');
+      for (const a of ack) push([a]);
+      const search = runResolutionSearch({
+        sessionId: session.id, ctx, claimId: ctx.selectedClaimId || null,
+        policy, lang: session.language || 'en', understanding: u,
+        fieldFilter: ctx.verification?.subjectRole === 'beneficiary' ? ctx.grant?.permittedFields : null,
+      });
+      ctx.attemptedResolutions = search.attempted || [];
+      if (search.outcome === 'needs_claim_selection') {
+        for (const sg of search.segments) push([sg]);
+        if (search.claims) ctx.claims = search.claims;
+        push(say('more_help'));
+        return finish('claims_selection');
+      }
+      if (search.outcome === 'resolved' || search.outcome === 'escalation_offered') {
+        for (const sg of search.segments) push([sg]);
+        for (const ev of search.evidence || []) effects.push({ type: 'evidence', evidence: ev });
+        for (const eff of search.effects || []) effects.push(eff);
+        if (ctx.selectedClaimId == null && search.claimId) ctx.selectedClaimId = search.claimId;
+        for (const w of wrapLine(u, session.language || 'en')) push([w]);
+        push(say('more_help'));
+        return finish('more_help');
+      }
+      if (search.outcome === 'cannot') {
+        // Exhaustive search failed -> transfer with full context (never repeat yourself)
+        ctx.transferReason = search.transferReason || 'unresolved after exhaustive search';
+        push(say('agent_transfer_search'));
+        ctx.transferRequested = true;
+        effects.push({ type: 'transfer' });
+        effects.push({ type: 'alert', alertType: 'unresolved_transfer', claimId: search.claimId || null, stage: 'PMS Processor', detail: { reason: ctx.transferReason, attempted: ctx.attemptedResolutions } });
+        return finish('transfer_pending');
+      }
+    }
 
     // FR-20: language switch on request (any state).
     if (p.switchLang && allLanguages().includes(p.switchLang) && p.switchLang !== session.language) {

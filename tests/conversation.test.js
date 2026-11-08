@@ -353,3 +353,70 @@ test('BDD-24/FR-42: Finance unavailable -> no cached answer, failure log, human/
     await t.call('POST', '/api/demo/faults', { name: 'finance_outage', on: false }, { staff: 'admin1' });
   }
 });
+
+
+// ---- AGENT MODE: exhaustive resolution search on free-form speech ----
+
+async function verifiedCaller(number) {
+  await t.clearOtp();
+  const r = await t.call('POST', '/api/calls', { caller_number: number }, { staff: 'admin1' });
+  const sid = r.json.session.id;
+  await t.call('POST', '/api/calls/' + sid + '/events', text('yes'), { staff: 'admin1' });
+  await t.call('POST', '/api/calls/' + sid + '/events', text('yes'), { staff: 'admin1' });
+  await t.call('POST', '/api/calls/' + sid + '/events', keys(await t.otpFromInbox(sid)), { staff: 'admin1' });
+  return sid;
+}
+
+test('AGENT: free-form payment problem resolves via exhaustive search (pending-timeline)', async () => {
+  const sid = await verifiedCaller('+91 55555 50005'); // Rohit: pending, approved 2 days ago
+  const res = await t.call('POST', '/api/calls/' + sid + '/events', text('I still have not received my reimbursement, it has been pending'), { staff: 'admin1' });
+  const all = repliesOf(res);
+  assert.ok(/let me/i.test(all), 'human acknowledgment first');
+  assert.ok(all.includes('pending with the Finance Disbursement team'), 'live facts from resolution search');
+  assert.ok(all.includes('No payment date is available'), 'still no invented dates');
+  assert.equal(res.json.session.state, 'more_help', 'agent loop continues');
+  await t.call('POST', '/api/calls/' + sid + '/events', hangup(true), { staff: 'admin1' });
+});
+
+test('AGENT: delay beyond threshold triggers escalation offer + alert', async () => {
+  await t.call('POST', '/api/demo/faults', { name: 'delay_payment', on: true }, { staff: 'admin1' });
+  try {
+    const sid = await verifiedCaller('+91 55555 50005');
+    const res = await t.call('POST', '/api/calls/' + sid + '/events', text('it has been weeks and the money is still not here, I am frustrated'), { staff: 'admin1' });
+    const all = repliesOf(res);
+    assert.ok(all.includes('beyond our 7-day service threshold'), 'delay explained with threshold');
+    assert.ok(all.includes('flagged this to the payments team'), 'proactive escalation promise');
+    const queue = await t.call('GET', '/api/queue/alerts', { staff: 'admin1' });
+    assert.ok(queue.json.alerts.some((a) => a.type === 'payment_delayed'), 'delay alert raised');
+    await t.call('POST', '/api/calls/' + sid + '/events', hangup(), { staff: 'admin1' });
+  } finally {
+    await t.call('POST', '/api/demo/faults', { name: 'delay_payment', on: false }, { staff: 'admin1' });
+  }
+});
+
+test('AGENT: exhausted search transfers with full context (no silent failure)', async () => {
+  try {
+    const sid = await verifiedCaller('+91 55555 50002'); // verify while portal is up
+    await t.call('POST', '/api/demo/faults', { name: 'portal_outage', on: true }, { staff: 'admin1' }); // then the outage hits
+    const res = await t.call('POST', '/api/calls/' + sid + '/events', text('my reimbursement has a problem, please help'), { staff: 'admin1' });
+    const all = repliesOf(res);
+    assert.ok(all.includes('checked everything I can reach'), 'transparent exhaustion message');
+    assert.ok(all.includes('you will not need to repeat'), 'context handoff promise');
+    assert.equal(res.json.session.state, 'transfer_pending');
+    const queue = await t.call('GET', '/api/queue/alerts', { staff: 'admin1' });
+    const a = queue.json.alerts.find((x) => x.type === 'unresolved_transfer');
+    assert.ok(a, 'transfer brief alert created');
+    await t.call('POST', '/api/calls/' + sid + '/events', hangup(), { staff: 'admin1' });
+  } finally {
+    await t.call('POST', '/api/demo/faults', { name: 'portal_outage', on: false }, { staff: 'admin1' });
+  }
+});
+
+test('AGENT: unverified callers never reach the resolution engine', async () => {
+  const r = await t.call('POST', '/api/calls', { caller_number: '+91 91234 00055' }, { staff: 'admin1' });
+  const sid = r.json.session.id;
+  const res = await t.call('POST', '/api/calls/' + sid + '/events', text('I have a payment problem, money not received'), { staff: 'admin1' });
+  assert.ok(!repliesOf(res).includes('credited'), 'no facts before verification');
+  assert.notEqual(res.json.session.state, 'more_help', 'stays in identification flow');
+  await t.call('POST', '/api/calls/' + sid + '/events', hangup(), { staff: 'admin1' });
+});

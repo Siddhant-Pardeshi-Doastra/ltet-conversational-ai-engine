@@ -3,6 +3,7 @@
 // (SEC-04) and the human-grade browser speech engine.
 import { api, esc, state } from '../app.js';
 import { voice, localeFor } from '../voice.js';
+import { LiveMic } from '../mic.js';
 
 let sim = { sessionId: null, busy: false, ttsOn: true, rate: 1, lang: 'auto' };
 let presets = [
@@ -33,16 +34,18 @@ export async function renderSimulator(root, params = {}) {
         <div class="phone-statusbar"><span id="sb-time"></span><span class="sb-right">LTET LINE <span class="sb-bar"></span></span></div>
         <div class="phone-top"><span class="dot"></span><span id="phone-status">Ready — start a call</span>
           <span class="eq" id="voice-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-          <span class="grow"></span><span id="phone-lang"></span></div>
-        <div class="transcript" id="transcript"><div class="bubble system" style="align-self:center;background:transparent;color:#7c98ad">Conversation will appear here. All data is synthetic.</div></div>
+          <span class="grow"></span>
+          <span class="turn-chip" id="turn-chip" style="display:none"></span>
+          <span id="phone-lang"></span></div>
+        <div class="transcript" id="transcript"><div class="bubble system" style="align-self:center;background:transparent;color:#7c98ad">Conversation will appear here.</div><div class="bubble interim" id="interim-bubble" style="display:none"></div></div>
         <div class="state-line">state: <span class="st" id="state-chip">idle</span> <span id="outcome-chip"></span></div>
         <div class="sim-input">
           <input type="text" id="utter" placeholder="Type what the caller says (e.g. 'haan', 'meri claim ka status', 'payment status', 'agent')…" />
           <button class="btn primary" id="send-btn">Send</button>
         </div>
         <div class="flex wrap mt">
-          <button class="btn sm" id="mic-btn" title="Browser speech recognition (where supported)">🎤 Speak</button>
-          <button class="btn sm" id="interrupt-btn" title="Stop current audio (simulated barge-in)">⏹ Interrupt</button>
+          <button class="btn sm" id="mic-btn" title="Continuous listening — the agent hears you in real time">🎙 Live voice: Off</button>
+          <button class="btn sm" id="interrupt-btn" title="Stop current audio (barge-in)">⏹ Interrupt</button>
           <button class="btn sm" id="repeat-btn">🔁 Repeat</button>
           <button class="btn sm" id="slow-btn">🐢 Slower</button>
           <span class="grow"></span>
@@ -165,32 +168,77 @@ export async function renderSimulator(root, params = {}) {
   $('#slow-btn').addEventListener('click', () => event({ type: 'utterance', text: 'slower please' }));
   $('#interrupt-btn').addEventListener('click', () => voice.cancel());
 
+  // Live voice: continuous listening with endpointing + echo-aware turn-taking.
+  let mic = null;
+  const setTurn = (mode) => {
+    const chip = $('#turn-chip');
+    if (!chip) return;
+    const map = {
+      listening: ['Listening…', 'turn-listen'], thinking: ['Thinking…', 'turn-think'],
+      speaking: ['Speaking…', 'turn-speak'], paused: ['Standing by…', 'turn-think'],
+      idle: ['', ''], denied: ['Mic blocked — use typed input', 'turn-off'], unsupported: ['Voice input unsupported — typed input', 'turn-off'],
+    };
+    const [label, cls] = map[mode] || ['', ''];
+    chip.textContent = label;
+    chip.className = 'turn-chip ' + cls;
+    chip.style.display = label ? '' : 'none';
+  };
+  mic = new LiveMic({
+    onFinal: (text) => { sendUtteranceText(text); },
+    onInterim: (text) => {
+      const b = $('#interim-bubble');
+      if (!b) return;
+      b.style.display = text ? '' : 'none';
+      b.textContent = text ? '🎙 ' + text : '';
+      const tr = $('#transcript');
+      tr.scrollTop = tr.scrollHeight;
+    },
+    onState: (s2) => {
+      if (s2 === 'listening') setTurn(mic && mic.active ? 'listening' : 'idle');
+      else if (s2 === 'denied' || s2 === 'unsupported') {
+        setTurn(s2);
+        const btn = $('#mic-btn');
+        btn.textContent = '🎙 Live voice: Off';
+        btn.classList.remove('live-on');
+        mic.active = false;
+      }
+    },
+  });
+  Object.defineProperty(mic, 'lang', { get() { return sim.lang === 'auto' ? 'en' : sim.lang; } });
+  Object.defineProperty(mic, 'locale', { get() { return localeFor(sim.lang === 'auto' ? 'en' : sim.lang); } });
   $('#mic-btn').addEventListener('click', () => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      $('#phone-status').textContent = 'Browser speech recognition unavailable in this environment — use typed utterances (labelled fallback).';
-      return;
+    const btn = $('#mic-btn');
+    if (mic.active) {
+      mic.stop();
+      btn.textContent = '🎙 Live voice: Off';
+      btn.classList.remove('live-on');
+      setTurn('');
+    } else {
+      const ok = mic.start();
+      if (ok !== false && mic.supported) {
+        btn.textContent = '🎙 Live voice: On';
+        btn.classList.add('live-on');
+      }
     }
-    const rec = new SR();
-    rec.lang = localeFor(sim.lang === 'auto' ? 'en' : sim.lang);
-    rec.interimResults = false;
-    rec.onresult = (e) => { const t = e.results[0][0].transcript; $('#utter').value = t; sendUtterance(); };
-    rec.onerror = () => { $('#phone-status').textContent = 'Speech recognition error — use typed utterances.'; };
-    rec.start();
-    $('#phone-status').textContent = 'Listening…';
   });
 
   if (params && params.number) $('#start-btn').click();
 
   function sendUtterance() {
     const v = $('#utter').value.trim();
-    if (!v || !sim.sessionId) return;
+    if (!v) return;
     $('#utter').value = '';
+    sendUtteranceText(v);
+  }
+
+  function sendUtteranceText(v) {
+    if (!v || !sim.sessionId) return;
+    setTurn('thinking');
     event({ type: 'utterance', text: v });
   }
 
   function resetTranscript() {
-    $('#transcript').innerHTML = '';
+    $('#transcript').innerHTML = '<div class="bubble interim" id="interim-bubble" style="display:none"></div>';
     $('#outcome-chip').innerHTML = '';
   }
 
@@ -216,12 +264,18 @@ export async function renderSimulator(root, params = {}) {
   }
 
   function speak(text, lang) {
-    if (!sim.ttsOn) return;
+    if (!sim.ttsOn) { if (mic.active) setTurn('listening'); return; }
     const eq = root.querySelector('#voice-eq');
+    // Echo-aware turn-taking: the mic stands down while the agent speaks.
+    if (mic && mic.active) mic.pause();
     voice.speak(text, lang, {
       rateMultiplier: sim.rate,
-      onStart: () => eq && eq.classList.add('on'),
-      onEnd: () => eq && eq.classList.remove('on'),
+      onStart: () => { eq && eq.classList.add('on'); setTurn('speaking'); },
+      onEnd: () => {
+        eq && eq.classList.remove('on');
+        if (mic && mic.active) { mic.resume(); setTurn('listening'); }
+        else setTurn('');
+      },
     });
   }
 
@@ -237,8 +291,10 @@ export async function renderSimulator(root, params = {}) {
       addBubbles(r.replies);
       if (evt.type === 'keypad' && r.session.verification?.challenge_active) refreshInbox();
       else refreshInbox();
+      if (!r.replies?.length && mic && mic.active) setTurn('listening');
     } catch (e) {
       if (e.status !== 409) addLocal('Simulator', e.message || 'event failed', 'keypad');
+      if (mic && mic.active) setTurn('listening');
     } finally { sim.busy = false; }
   }
 

@@ -49,6 +49,24 @@ durable worker + tests + governed administration, all on synthetic data.
   Calls, Processor Work Queue, Claim Context, Analytics, Administration
   (versioned policy with approval/publish/rollback), Scenarios & Integration Health.
 
+
+## Beyond IVR — why this is an agent, not a menu
+
+| Feature | Traditional IVR | LTET Conversational AI Engine |
+|---|---|---|
+| Input method | Keypad DTMF or strict single-word commands | Natural spoken voice (live mic with endpointing) & keypad fallback |
+| Language support | Fixed menu, single language per call | 22 languages with live code-switching mid-sentence |
+| Data fetching | Static audio prompts / basic lookups | Live real-time portal queries at answer time |
+| Problem handling | Rigid menu trees, dead ends | Exhaustive resolution search over every resolvable path before human transfer |
+| Call outcome | Simple routing or static readout | Structured post-call summary, sentiment estimate & processor alerts |
+| Factual safety | Depends on fixed hardcoding | Real-time fact validator guardrail before TTS |
+
+The agent listens continuously (endpointed live voice), interprets free-form
+multi-clause speech — including frustration and urgency — and walks an
+exhaustive resolution search against live portal data. A human transfer happens
+only when no automated path resolves the issue, and it carries a full context
+brief so the client never repeats themselves.
+
 ## Release boundary
 
 Out of scope (per the Release 1 FRS): outbound/proactive AI calls, voice claim

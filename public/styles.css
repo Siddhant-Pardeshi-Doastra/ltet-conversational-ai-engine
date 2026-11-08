@@ -412,3 +412,23 @@ select:focus, input:focus, textarea:focus { border-color: var(--teal-500); box-s
 
 /* group optgroup labels in the language selector */
 select optgroup { font-weight: 700; color: var(--navy-600); }
+
+/* =====================================================================
+   Live voice turn-taking (agent mode)
+   ===================================================================== */
+.turn-chip {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase;
+  padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+}
+.turn-chip.turn-listen { background: rgba(47, 191, 159, 0.16); color: #7fe0d6; border: 1px solid rgba(47, 191, 159, 0.4); }
+.turn-chip.turn-think { background: rgba(224, 164, 55, 0.14); color: #f0cd7e; border: 1px solid rgba(224, 164, 55, 0.4); }
+.turn-chip.turn-speak { background: rgba(79, 179, 165, 0.2); color: #c9f3ec; border: 1px solid rgba(79, 179, 165, 0.5); }
+.turn-chip.turn-off { background: rgba(192, 86, 77, 0.16); color: #eda39b; border: 1px solid rgba(192, 86, 77, 0.4); }
+@keyframes turnPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+.turn-chip.turn-listen { animation: turnPulse 1.6s ease-in-out infinite; }
+
+.bubble.interim {
+  background: transparent; border: 1.5px dashed rgba(79, 179, 165, 0.5);
+  color: #9ed8cf; align-self: flex-end; font-style: italic; font-size: 12.5px;
+}
+.btn.live-on { background: var(--teal-600); color: #fff; border-color: var(--teal-600); box-shadow: 0 0 0 3px rgba(20, 145, 155, 0.18); }

@@ -198,3 +198,37 @@ test('money formatting: Indian grouping in integer minor units', async () => {
   assert.equal(formatInr(5), '₹0.05');
   assert.equal(formatInr(null), 'Unknown');
 });
+
+// ---- conversational interpretation layer ----
+const { interpret, acknowledge } = await import('../server/engine/conversation.js');
+
+test('interpret: free-form reimbursement problems classify into resolvable kinds', () => {
+  assert.equal(interpret('I still have not received the money in my account').kind, 'payment_missing');
+  assert.equal(interpret('payment has been pending for three weeks now').kind, 'payment_delay');
+  assert.equal(interpret('my reimbursement got rejected by the bank').kind, 'payment_failed');
+  assert.equal(interpret('the credited amount is less than what I claimed').kind, 'amount_issue');
+  assert.equal(interpret('the processor asked for hotel bills').kind, 'query_help');
+  assert.equal(interpret('what is the status of CLM-10010').kind, 'status');
+});
+
+test('interpret: sentiment, urgency and greeting/thanks signals', () => {
+  const u = interpret('this is ridiculous, I am very frustrated, nobody is helping');
+  assert.equal(u.sentiment, 'distressed');
+  const urgent = interpret('this is urgent, I need it immediately for a hospital payment');
+  assert.equal(urgent.urgency, 'high');
+  assert.ok(interpret('hello').greeting);
+  assert.ok(interpret('thank you so much').sentiment === 'positive' || interpret('thank you so much').thanks);
+});
+
+test('acknowledge: deterministic template lines only, no invented facts', () => {
+  for (const u of [
+    interpret('payment pending for weeks'),
+    interpret('I am frustrated, nothing is happening'),
+    interpret('this is urgent'),
+  ]) {
+    for (const a of acknowledge(u, 'en')) {
+      assert.ok(a.text.length > 0 && a.text.length < 140, 'short human ack line');
+      assert.ok(!/d{5,}/.test(a.text), 'no identifiers or amounts fabricated');
+    }
+  }
+});
