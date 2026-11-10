@@ -1,187 +1,473 @@
-# LTET Conversational AI Engine — Release 1.0
+<p align="center">
+  <img src="docs/screenshots/overview.png" alt="LTET Conversational AI Engine — Operations Dashboard" width="90%" />
+</p>
 
-A voice-assistant engine for the **LTET Employee Trust Portal** that answers
-**verified** claim-status, Finance-payment and listed-beneficiary enquiries over an
-India toll-free helpline, then produces auditable post-call records for processors.
-Built by DOASTRA as a complete, production-shaped **Release 1.0** platform: backend + frontend +
-durable worker + tests + governed administration, all on synthetic data.
+<h1 align="center">
+  🎙️ LTET Conversational AI Engine
+</h1>
 
-> **Workspace dataset:** this deployment runs on a locally managed dataset. No real employees, claims,
-> payments, phone numbers or carriers exist in the workspace. Production connectivity requires the
-> external integrations and approvals listed in [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md)
-> and [docs/OPEN_DECISIONS.md](docs/OPEN_DECISIONS.md).
+<p align="center">
+  <strong>A deterministic, fact-safe conversational AI platform for the LTET Employee Trust Portal</strong>
+</p>
 
-![Overview](docs/screenshots/overview.png)
-![Call Simulator](docs/screenshots/simulator.png)
+<p align="center">
+  <em>Voice assistant that answers verified claim-status, payment &amp; beneficiary enquiries<br/>across 22 languages — then produces auditable post-call intelligence for processors.</em>
+</p>
 
-## What Release 1 does
+<p align="center">
+  <a href="#-quickstart"><img src="https://img.shields.io/badge/🚀_Get_Started-in_30_seconds-00C853?style=for-the-badge" alt="Get Started" /></a>
+  <a href="docs/DEMO_GUIDE.md"><img src="https://img.shields.io/badge/🎬_Demo_Guide-10_min_walkthrough-7C4DFF?style=for-the-badge" alt="Demo Guide" /></a>
+  <a href="docs/ARCHITECTURE.md"><img src="https://img.shields.io/badge/🏗️_Architecture-deep_dive-FF6D00?style=for-the-badge" alt="Architecture" /></a>
+</p>
 
-- **UC-01 Claim status** — authenticated enquiries across 17 configurable schemes:
-  zero/one/many open claims, latest-three narration then bounded batches,
-  processing-stage answers (PMS Processor → Sub-panel Review → Apex Panel Review →
-  Approval), open PMS-processor queries read out alongside the stage, another-claim
-  loop, five-claims-per-call cap.
-- **UC-02 Payment information** — Finance approval stated first, then the payment
-  group mapped from raw Finance status (credited / processed / pending / failed /
-  held). Credited speaks the authoritative amount, credit date and bank reference;
-  processed/pending invent no date; failed/held speak the recorded reason, alert the
-  responsible processor and offer escalation. Disputes transfer immediately.
-  Unavailable Finance data never produces a cached answer.
-- **UC-03 Listed beneficiaries** — employee-vs-beneficiary branch, PS-No. capture
-  with digit-by-digit confirmation, challenge to the beneficiary's calling number,
-  and **least-privilege enforcement via a trusted binding + explicit grant**
-  (proposed security extension — see [docs/SECURITY_DECISIONS.md](docs/SECURITY_DECISIONS.md)).
-- **Vernacular conversation** — 22 languages configured: the 12 FRS-core languages
-  (English, Hindi, Bengali, Marathi, Tamil, Telugu, Gujarati, Punjabi, Malayalam,
-  Kannada, Odia, Assamese) plus a 10-language extended catalogue (Urdu, Spanish,
-  French, German, Portuguese, Arabic, Chinese, Japanese, Russian, Indonesian),
-  with code-switching, spoken numbers and ordinals. English is native-approved;
-  all other packs are labelled *draft translations* pending native-speaker
-  sign-off (FR-37).
-- **Human-grade voice** — the assistant ranks device voices per language
-  (preferring neural/natural voices), speaks in sentence cadence with natural
-  breath pauses, and exposes a voice picker with per-language prosody. Live
-  neural TTS providers plug into the same interface.
-- **Post-call intelligence** — durable outbox worker creates the immutable call log,
-  deduplicated claim entries, document history, structured English summary,
-  processor alerts and analytics. It survives restarts and replays.
-- **Staff console** — Overview, Call Simulator (with isolated demo SMS inbox),
-  Calls, Processor Work Queue, Claim Context, Analytics, Administration
-  (versioned policy with approval/publish/rollback), Scenarios & Integration Health.
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-≥_22.13-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/SQLite-WAL_mode-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" />
+  <img src="https://img.shields.io/badge/Express-v4-000000?style=flat-square&logo=express&logoColor=white" alt="Express" />
+  <img src="https://img.shields.io/badge/Tests-78_passing-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/Languages-22-blue?style=flat-square" alt="Languages" />
+  <img src="https://img.shields.io/badge/API_Keys-zero_required-success?style=flat-square" alt="Zero API Keys" />
+  <img src="https://img.shields.io/badge/License-UNLICENSED-red?style=flat-square" alt="License" />
+</p>
 
+<br/>
 
-## Beyond IVR — why this is an agent, not a menu
+---
 
-| Feature | Traditional IVR | LTET Conversational AI Engine |
-|---|---|---|
-| Input method | Keypad DTMF or strict single-word commands | Natural spoken voice (live mic with endpointing) & keypad fallback |
-| Language support | Fixed menu, single language per call | 22 languages with live code-switching mid-sentence |
-| Data fetching | Static audio prompts / basic lookups | Live real-time portal queries at answer time |
-| Problem handling | Rigid menu trees, dead ends | Exhaustive resolution search over every resolvable path before human transfer |
-| Call outcome | Simple routing or static readout | Structured post-call summary, sentiment estimate & processor alerts |
-| Factual safety | Depends on fixed hardcoding | Real-time fact validator guardrail before TTS |
+<br/>
 
-The agent listens continuously (endpointed live voice), interprets free-form
-multi-clause speech — including frustration and urgency — and walks an
-exhaustive resolution search against live portal data. A human transfer happens
-only when no automated path resolves the issue, and it carries a full context
-brief so the client never repeats themselves.
+## 🌟 What Is This?
 
-## Release boundary
+The **LTET Conversational AI Engine** is a complete **Release 1.0** platform — backend, frontend, durable worker, tests, and governed administration — built by **DOASTRA** for the LTET Employee Trust Portal.
 
-Out of scope (per the Release 1 FRS): outbound/proactive AI calls, voice claim
-submission or edits, document upload, payment execution, bank-account changes,
-international toll-free, production WhatsApp/chat channels. The browser call
-simulator is a demonstration/testing interface, not an additional production channel.
+It's not an IVR. It's not a chatbot. It's a **deterministic voice agent** that:
 
-## Quickstart
+- 🎤 **Listens continuously** with endpointed live voice (or accepts keypad/text)
+- 🧠 **Understands free-form multi-clause speech** including frustration, urgency, and code-switching
+- 🔍 **Runs an exhaustive resolution search** against live portal data before every answer
+- ✅ **Validates every spoken fact** against a fresh source snapshot — nothing invented, nothing unverified
+- 🤝 **Transfers to humans only when no automated path resolves the issue** — carrying full context so the caller never repeats themselves
 
-Prerequisites: **Node.js ≥ 22.13** (uses the built-in `node:sqlite`; no native deps).
-No API keys required — every external dependency runs as an explicit mock.
+<br/>
+
+<p align="center">
+  <img src="docs/screenshots/simulator.png" alt="Call Simulator — Live Voice Agent in Action" width="85%" />
+</p>
+
+<br/>
+
+---
+
+## ⚡ Beyond IVR — Why This Is an Agent, Not a Menu
+
+<table>
+<tr>
+<th width="30%">Feature</th>
+<th width="35%">Traditional IVR 📞</th>
+<th width="35%">LTET AI Engine 🎙️</th>
+</tr>
+<tr>
+<td><strong>Input method</strong></td>
+<td>Keypad DTMF or strict single-word commands</td>
+<td>Natural spoken voice (live mic with endpointing) & keypad fallback</td>
+</tr>
+<tr>
+<td><strong>Language support</strong></td>
+<td>Fixed menu, single language per call</td>
+<td>22 languages with live code-switching mid-sentence</td>
+</tr>
+<tr>
+<td><strong>Data fetching</strong></td>
+<td>Static audio prompts / basic lookups</td>
+<td>Live real-time portal queries at answer time</td>
+</tr>
+<tr>
+<td><strong>Problem handling</strong></td>
+<td>Rigid menu trees, dead ends</td>
+<td>Exhaustive resolution search over every resolvable path before human transfer</td>
+</tr>
+<tr>
+<td><strong>Call outcome</strong></td>
+<td>Simple routing or static readout</td>
+<td>Structured post-call summary, sentiment estimate & processor alerts</td>
+</tr>
+<tr>
+<td><strong>Factual safety</strong></td>
+<td>Depends on fixed hardcoding</td>
+<td>Real-time fact validator guardrail before TTS</td>
+</tr>
+</table>
+
+<br/>
+
+---
+
+## 🎯 Use Cases (Release 1)
+
+<table>
+<tr>
+<td width="33%" align="center">
+
+### 📋 UC-01: Claim Status
+
+17 configurable schemes • 4 processing stages • zero/one/many claims • latest-three narration with batches • open processor queries read aloud • five-claims-per-call cap
+
+</td>
+<td width="33%" align="center">
+
+### 💰 UC-02: Payment Info
+
+Finance approval stated first • payment group mapping (credited / processed / pending / failed / held) • authoritative amounts & bank refs • dispute escalation • no cached answers for unavailable data
+
+</td>
+<td width="33%" align="center">
+
+### 👥 UC-03: Beneficiaries
+
+Employee vs. beneficiary branching • PS-No digit-by-digit capture • challenge to calling number • **least-privilege via trusted binding + explicit grant**
+
+</td>
+</tr>
+</table>
+
+<br/>
+
+---
+
+## 🚀 Quickstart
+
+> **Prerequisites:** Node.js ≥ 22.13 (uses built-in `node:sqlite`). No native deps. No API keys.
 
 ```bash
+# Clone the repository
+git clone https://github.com/Siddhant-Pardeshi-Doastra/ltet-conversational-ai-engine.git
+cd ltet-conversational-ai-engine
+
+# Install dependencies (~5 seconds, pure JS)
 npm install
-npm run seed     # deterministic synthetic fixtures (17 schemes, 14 employees, 24 claims, staff)
-npm start        # http://127.0.0.1:8787
+
+# Seed the workspace dataset (17 schemes, 14 employees, 24 claims)
+npm run seed
+
+# Launch the platform
+npm start
+# → http://127.0.0.1:8787
 ```
 
-Or in one step: `npm run demo` (reset + start).
+Or in **one step**: `npm run demo` (reset + start)
 
-**Workspace accounts** (password `Demo#Pass1`):
+<br/>
 
-| User | Role | Sees |
-|---|---|---|
+### 🔑 Workspace Accounts
+
+> All accounts use password: `Demo#Pass1`
+
+| User | Role | Access |
+|:---:|:---:|:---|
 | `pms1`, `pms2` | PMS Processor | PMS-stage alerts, claim context in stage |
-| `spm1` | SPM | Sub-panel Review queue |
-| `apm1` | APM | Apex Panel Review + Approval queue |
-| `admin1` | Administrator | Everything incl. administration + workspace tools |
+| `spm1` | Sub-Panel Member | Sub-panel Review queue |
+| `apm1` | Apex Panel Member | Apex Panel Review + Approval queue |
+| `admin1` | Administrator | **Everything** incl. administration + workspace tools |
 | `auditor1` | Auditor | Read-only incl. transcripts (FR-36) |
 
-Sign in, open **Call Simulator**, press a caller preset (e.g. *Credited payment
-(Vikram)*), confirm the masked PS No., read the OTP from the **Secure Message
-Inbox** panel, enter it on the keypad, and ask *"what is my payment status"*.
-[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) has the full 10–15 minute team walkthrough.
+> 💡 **Quick demo:** Sign in as `admin1`, open **Call Simulator**, click a caller preset (e.g. *"Credited payment (Vikram)"*), follow the guided flow, read the OTP from the **Secure Message Inbox** panel.
 
-**Handing the demo to someone (or another AI tool):** share
-[`AI_DEMO_RUNBOOK.txt`](AI_DEMO_RUNBOOK.txt) — a self-contained handoff with
-context, exact run steps, health checks, the full walkthrough script, API
-fallback commands, troubleshooting and presenter guardrails.
+<br/>
 
-## Commands
+---
 
-| Command | What it does |
-|---|---|
-| `npm run seed` | Apply migrations + seed synthetic fixtures (add `--force` via `node server/seed.js --force` to reset) |
+## 🏗️ Architecture
+
+```
+                         ┌────────────────────────────────────────────────┐
+   Staff Console         │  public/ SPA (Overview, Simulator, Calls,      │
+   (browser) ───────────►│  Queue, Claim Context, Analytics, Admin,      │
+                         │  Scenarios & Health)                           │
+                         └───────────────┬────────────────────────────────┘
+                                         │ fetch (session cookie)
+                         ┌───────────────▼────────────────────────────────┐
+   Carrier/IVR (live)    │  Express API (server/routes)                   │
+   webhook ─────────────►│  auth · calls · staff · admin · demo · health  │
+   (HMAC + nonce)        │────────────────────────────────────────────────│
+                         │  Conversation Engine (server/engine)           │
+                         │   machine.js  — deterministic state machine    │
+                         │   conversation.js — free-form understanding    │
+                         │   resolution.js — exhaustive resolution search │
+                         │   intents.js  — no-key NLU (22 languages)      │
+                         │   answers.js  — fact-safe plans + validation   │
+                         │────────────────────────────────────────────────│
+                         │  Adapters (server/adapters)                    │
+                         │   portal.js  ·  otp.js  ·  speech.js          │
+                         │────────────────────────────────────────────────│
+                         │  Services                                      │
+                         │   calls · verification · alerts · policy       │
+                         │   postcall (durable worker) · analytics        │
+                         │   retention · audit · scenarios                 │
+                         └───────────────┬────────────────────────────────┘
+                                         │ node:sqlite (WAL)
+                         ┌───────────────▼────────────────────────────────┐
+                         │  data/ltet.db                                  │
+                         │  portal_* (synthetic system of record)         │
+                         │  call_* / alerts / jobs / audit / policy_cfgs  │
+                         └────────────────────────────────────────────────┘
+```
+
+<details>
+<summary><strong>📡 Sequence Diagram — Happy Path (UC-02 Payment)</strong></summary>
+
+```
+Caller        Engine                         Portal(mock)          Worker
+  │ call.started │                                │                   │
+  │  "yes" ─────► masked PS confirm ─────────────►│ lookupByPhone     │
+  │  "yes" ─────► OTP challenge (hash) ──────────►│                   │
+  │  [keypad] ──► verify ──► verified(session)    │                   │
+  │  "payment?"─► listOpenClaims ────────────────►│ live fetch        │
+  │              │ select + confirm claim         │                   │
+  │              │ getFinancePayment ────────────►│ raw status        │
+  │              │ build plans → validate vs FRESH snapshot           │
+  │ ◄─ "approved… credited ₹24,500.00 on …"       │                   │
+  │  "no" ───────► ending → hangup ──────────────────────────────────►│ finalize
+  │                                               │   log + history + summary + alerts
+```
+
+</details>
+
+<br/>
+
+---
+
+## 🛡️ Security by Design
+
+<table>
+<tr>
+<td>🔐</td>
+<td><strong>SEC-01/02 — Identity Verification</strong></td>
+<td>Caller-ID match or knowing a PS No. <strong>never</strong> grants access — OTP to the registered channel is mandatory</td>
+</tr>
+<tr>
+<td>👤</td>
+<td><strong>SEC-03 — Beneficiary Access</strong></td>
+<td>Requires a <strong>previously verified binding + explicit scoped grant</strong>; an OTP alone is not enough</td>
+</tr>
+<tr>
+<td>🔑</td>
+<td><strong>SEC-04 — OTP Handling</strong></td>
+<td>Hashed, keypad-only, replay-safe; absent from every transcript, log, and model input</td>
+</tr>
+<tr>
+<td>📝</td>
+<td><strong>SEC-05/06 — Audit & RBAC</strong></td>
+<td>Role-based access server-side; transcripts audited and restricted; unverified callers can never attach history</td>
+</tr>
+<tr>
+<td>🌐</td>
+<td><strong>SEC-07 — Webhook Security</strong></td>
+<td>Signed carrier webhooks with nonce replay protection</td>
+</tr>
+</table>
+
+<br/>
+
+---
+
+## 🌍 22 Languages Supported
+
+<table>
+<tr>
+<th>12 FRS-Core Languages</th>
+<th>10 Extended Catalogue</th>
+</tr>
+<tr>
+<td>
+
+🇬🇧 English &nbsp; 🇮🇳 Hindi &nbsp; 🇮🇳 Bengali &nbsp; 🇮🇳 Marathi<br/>
+🇮🇳 Tamil &nbsp; 🇮🇳 Telugu &nbsp; 🇮🇳 Gujarati &nbsp; 🇮🇳 Punjabi<br/>
+🇮🇳 Malayalam &nbsp; 🇮🇳 Kannada &nbsp; 🇮🇳 Odia &nbsp; 🇮🇳 Assamese
+
+</td>
+<td>
+
+🇵🇰 Urdu &nbsp; 🇪🇸 Spanish &nbsp; 🇫🇷 French &nbsp; 🇩🇪 German<br/>
+🇧🇷 Portuguese &nbsp; 🇸🇦 Arabic &nbsp; 🇨🇳 Chinese<br/>
+🇯🇵 Japanese &nbsp; 🇷🇺 Russian &nbsp; 🇮🇩 Indonesian
+
+</td>
+</tr>
+</table>
+
+> **Code-switching demo:** Type *"mera CLM-10020 ka payment status kya hai"* — the engine detects Hindi/English code-switching, captures the claim ID, and responds in Hindi. 🎯
+
+<br/>
+
+---
+
+## 🖥️ Staff Console — 8 Screens
+
+| Screen | What It Does |
+|:---|:---|
+| 📊 **Overview** | Animated operations dashboard with live metrics |
+| 🎙️ **Call Simulator** | Drives the real engine: identity → OTP → claim selection → validated answers |
+| 📞 **Calls** | Immutable call logs with structured summaries |
+| 📋 **Work Queue** | Processor alerts & callbacks (acknowledge → close) |
+| 📁 **Claim Context** | Read-only claim facts + document history timeline |
+| 📈 **Analytics** | Containment, drivers, payment mix, downloadable reports |
+| ⚙️ **Administration** | Versioned policy: draft → approve → publish → rollback |
+| 🔧 **Scenarios & Health** | Reproducible scenario suite + platform status |
+
+<br/>
+
+---
+
+## 🧪 Testing
+
+```bash
+npm test    # 78 tests across 6 suites (Node.js built-in test runner)
+```
+
+| Suite | Coverage |
+|:---|:---|
+| **Engine** | Intent parsing across 12 languages, code-switching, ordinals, PS/claim-ID capture, fact-validation blocking |
+| **Conversation** | BDD-mapped flows: greeting, OTP, claims batches, all payment groups, disputes, outages, hang-ups |
+| **Security** | SEC-01→07: impostor denial, scoped grants, OTP hashing/replay, webhook signatures, RBAC, rate limits |
+| **Post-call** | Exactly-once logs, duplicate-webhook idempotency, crash recovery, analytics reconciliation, retention purge |
+| **API** | Auth, masking, stage scoping, search/tags, reports |
+| **Live-mode** | Separate process proving demo tools are impossible in live mode |
+
+> See [`docs/TEST_REPORT.md`](docs/TEST_REPORT.md) for full results and externally unvalidated items.
+
+<br/>
+
+---
+
+## ⚙️ Configuration
+
+Copy `.env.example` → `.env`. Defaults run the demo safely.
+
+| Variable | Purpose |
+|:---|:---|
+| `LTET_MODE` | `demo` or `live` — live mode with missing config **fails readiness** (no silent fallback) |
+| `SESSION_SECRET` | Required in live mode |
+| `IDENTITY_API_URL`, `PORTAL_CLAIMS_API_URL`, `FINANCE_API_URL`, `OTP_PROVIDER_URL` | Live integration endpoints |
+| `ENABLE_CALL_RECORDINGS` | Off by default pending consent/storage policy |
+
+> 📋 **Runtime policy** (helpdesk hours, claims cap, OTP limits, stage routing, retention) is **versioned configuration** managed through the Administration screen.
+
+<br/>
+
+---
+
+## 📦 Commands
+
+| Command | Description |
+|:---:|:---|
+| `npm run seed` | Apply migrations + seed synthetic fixtures (`--force` to reset) |
 | `npm start` | Start engine + staff console + post-call worker |
-| `npm test` | 78 automated tests: engine, conversation (BDD-mapped), security (SEC-mapped), post-call durability, API, live-mode gating |
+| `npm test` | 78 automated tests across 6 suites |
 | `npm run lint` | Syntax check all sources |
-| `npm run demo` | Reset workspace data + start |
+| `npm run demo` | Reset workspace data + start (one-step) |
 
-## Configuration
+<br/>
 
-Copy `.env.example` → `.env`. Defaults run the demo safely. Key settings:
+---
 
-- `LTET_MODE=demo|live` — in **live** mode with missing integration config,
-  readiness **fails** and private workflows stay disabled. There is no silent
-  fallback to synthetic data, and all demo tools (reset / fault injection / mock
-  OTP inbox / role switcher) are hard-blocked and audited.
-- `SESSION_SECRET`, `TELEPHONY_WEBHOOK_SECRET` — required in live mode.
-- `IDENTITY_API_URL`, `PORTAL_CLAIMS_API_URL`, `FINANCE_API_URL`, `OTP_PROVIDER_URL`
-  — live adapter endpoints (IR-02/04/05/06/03).
-- `ENABLE_CALL_RECORDINGS=false` — audio storage stays off pending approved
-  consent/storage policy (SEC-07/NFR-08).
-
-Runtime policy (helpdesk hours, claims cap, OTP limits, stage→persona routing,
-payment-status mapping, delay threshold, retention) is **versioned configuration**
-draft → approve → publish → rollback in the Administration screen — unsafe values
-are rejected before save (FR-39).
-
-## Tests
-
-`npm test` runs 78 tests in 6 suites (Node's built-in runner):
-
-- **engine** — intent parsing across all 12 languages, code-switching, ordinals,
-  PS/claim-ID capture, fact-validation blocking, money formatting.
-- **conversation** — BDD-mapped flows: greeting/notice, masked confirmation,
-  keypad entry, wrong-OTP lockout, zero/one/many claims, batches, every payment
-  group, unmapped status, disputes, refusals, language switch, recognition
-  failures, cap, busy, hang-ups, portal/Finance outages.
-- **security** — SEC-01..07: impostor beneficiary denied, scoped grants, revoked
-  grant, SMS-incapable numbers, OTP hashing/replay/redaction, webhook signature +
-  replay, RBAC on transcripts/queues, unsafe policy rejection, rate limiting.
-- **postcall** — exactly-once logs/history/alerts, duplicate-webhook idempotency,
-  worker crash recovery, analytics reconciliation, retention purge, policy
-  versioning.
-- **api** — auth, masking, stage scoping, search/tags, reports.
-- **live-mode** — separate process proving demo tools are impossible in live mode
-  and readiness fails closed without configuration.
-
-Actual results are recorded in [docs/TEST_REPORT.md](docs/TEST_REPORT.md), including
-what remains **externally unvalidated** (real audio recognition, carrier behaviour,
-native-speaker language sign-off, load).
-
-## Repository layout
+## 📂 Repository Structure
 
 ```
-server/            engine, adapters, services, routes (Node 22 ESM, express, node:sqlite)
-public/            no-build SPA (vanilla ES modules + hand-rolled SVG charts)
-languages/packs/   22 versioned language packs (12 FRS-core + 10 extended)
-contracts/         proposed OpenAPI 3.1 definition
-tests/             6 test suites (node:test)
-docs/              project context, traceability, architecture, workflows,
-                   security decisions, integrations, demo guide, test report,
-                   deployment, open decisions, team overview
+📦 ltet-conversational-ai-engine
+├── 🖥️  server/              Engine, adapters, services, routes
+│   ├── engine/              Conversation machine, intents, resolution, answers
+│   ├── adapters/            Portal, OTP, speech adapters
+│   ├── services/            Calls, verification, alerts, policy, postcall, analytics
+│   ├── routes/              Auth, calls, staff, admin, demo, health, telephony
+│   └── auth/                Sessions, demo credentials
+├── 🌐  public/              No-build SPA (vanilla ES modules + SVG charts)
+│   └── views/               Screen components
+├── 🌍  languages/packs/     22 versioned language packs (JSON)
+├── 📜  contracts/           OpenAPI 3.1 definition
+├── 🧪  tests/               6 test suites (node:test)
+├── 📚  docs/                Architecture, security, deployment, integrations,
+│   │                        demo guide, test report, team overview, traceability
+│   └── screenshots/         Console screenshots
+├── 🔧  .github/workflows/   CI pipeline (lint + tests, zero paid keys)
+├── 📋  .env.example          Environment template
+├── 📖  AI_DEMO_RUNBOOK.txt  Self-contained handoff for running & presenting the demo
+└── 📦  package.json
 ```
 
-## Limitations (read before presenting)
+<br/>
 
-- Real speech quality (ASR/TTS per language), carrier/toll-free behaviour and
-  production identity/Finance APIs are **not** validated here — the demo uses
-  browser speech engines and a deterministic no-key intent adapter.
-- The trusted-beneficiary binding/grant model is a **proposed security correction**,
-  not a source-confirmed FRS field; it requires LTET review before live use.
-- 11 of 12 language packs are generated drafts awaiting native-speaker approval;
-  readiness can be phased per language (FR-37).
-- Audio recording is off by default; recording consent/retention needs legal review.
+---
 
-See [docs/OPEN_DECISIONS.md](docs/OPEN_DECISIONS.md) for the full decision register.
+## 📖 Documentation
+
+| Document | What's Inside |
+|:---|:---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Stack rationale, component diagram, trust boundaries, engine states |
+| [`docs/SECURITY_DECISIONS.md`](docs/SECURITY_DECISIONS.md) | Security model, deliberate corrections (SEC-01→07) |
+| [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) | Full 10–15 minute team walkthrough |
+| [`docs/TEAM_OVERVIEW.md`](docs/TEAM_OVERVIEW.md) | Slide-ready summary for stakeholders |
+| [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) | External integration requirements for production |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Deployment guide and operational runbook |
+| [`docs/REQUIREMENTS_TRACEABILITY.md`](docs/REQUIREMENTS_TRACEABILITY.md) | FRS requirement → implementation traceability matrix |
+| [`docs/WORKFLOWS.md`](docs/WORKFLOWS.md) | End-to-end workflow documentation |
+| [`docs/OPEN_DECISIONS.md`](docs/OPEN_DECISIONS.md) | 23 tracked go-live decisions with owners |
+| [`docs/TEST_REPORT.md`](docs/TEST_REPORT.md) | Test results and externally unvalidated items |
+| [`AI_DEMO_RUNBOOK.txt`](AI_DEMO_RUNBOOK.txt) | Self-contained handoff for AI/human presenters |
+
+<br/>
+
+---
+
+## ⚠️ Limitations (Read Before Presenting)
+
+> **This is Release 1.0 running on a managed workspace dataset.**
+
+- Real speech quality (ASR/TTS per language), carrier/toll-free behaviour, and production identity/Finance APIs are **not** validated — the demo uses browser speech engines and deterministic no-key adapters
+- The trusted-beneficiary binding/grant model is a **proposed security correction**, pending LTET review
+- 11 of 12 language packs are generated drafts awaiting native-speaker approval
+- Audio recording is off by default; recording consent/retention needs legal review
+
+> 📋 See [`docs/OPEN_DECISIONS.md`](docs/OPEN_DECISIONS.md) for the full 23-item decision register.
+
+<br/>
+
+---
+
+## 🗺️ Release Boundary
+
+**Out of scope for Release 1** (per FRS): outbound/proactive AI calls, voice claim submission or edits, document upload, payment execution, bank-account changes, international toll-free, production WhatsApp/chat channels. The browser call simulator is a demonstration/testing interface, not an additional production channel.
+
+<br/>
+
+---
+
+## 🤝 Contributing
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'feat: add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+> 📋 Please read the existing documentation and run `npm test` before submitting. All tests must pass.
+
+<br/>
+
+---
+
+## 📫 Handoff
+
+Handing the demo to someone (or another AI tool)?<br/>
+Share [`AI_DEMO_RUNBOOK.txt`](AI_DEMO_RUNBOOK.txt) — a self-contained handoff with context, exact run steps, health checks, the full walkthrough script, API fallback commands, troubleshooting, and presenter guardrails.
+
+<br/>
+
+---
+
+<p align="center">
+  <strong>Built with ❤️ by <a href="https://github.com/Siddhant-Pardeshi-Doastra">DOASTRA</a></strong>
+</p>
+
+<p align="center">
+  <sub>LTET Conversational AI Engine v1.0.0 — Deterministic. Fact-safe. Auditable.</sub>
+</p>
