@@ -48,6 +48,8 @@ const state = {
   listeners: [],
   currentAudio: null,
   currentAudioUrl: null,
+  currentPlaybackResolve: null,
+  queueTail: Promise.resolve(),
 };
 
 // Neural voice bridge (Sarvam AI) — probed once per page load. When the server
@@ -195,16 +197,27 @@ export const voice = {
     return chunkSoft(text).map((c) => c.text);
   },
 
-  _seq: 0,
+  _seq: 0, // playback generation — bumped only by cancel() (barge-in)
 
-  /** Route the reply: neural bridge first when available, device channel otherwise. */
+  /**
+   * Route the reply: neural bridge first when available, device channel
+   * otherwise. Every reply joins a sequential playback queue, so multi-bubble
+   * answers speak one after another instead of overlapping (device voices
+   * queue naturally; Audio elements do not). The generation captured at speak
+   * time is invalidated only by cancel(), so queuing a new reply never
+   * interrupts the one in flight — only an explicit barge-in does.
+   */
   speak(text, lang, opts = {}) {
-    const token = ++this._seq;
-    if (neural.tts && neural.ttsLangs.includes(lang) && opts.neural !== false) {
-      this._speakNeural(text, lang, opts, token);
-      return;
-    }
-    this._speakLocal(text, lang, opts, token);
+    const gen = this._seq;
+    const run = () => {
+      if (gen !== this._seq) return Promise.resolve();
+      if (neural.tts && neural.ttsLangs.includes(lang) && opts.neural !== false) {
+        return this._speakNeural(text, lang, opts, gen);
+      }
+      return this._speakLocal(text, lang, opts, gen);
+    };
+    state.queueTail = state.queueTail.then(run, run);
+    return state.queueTail;
   },
 
   /** Neural bridge: the server renders Bulbul audio; any failure falls back
@@ -212,10 +225,12 @@ export const voice = {
   async _speakNeural(text, lang, opts, token) {
     let url = null;
     let audio = null;
+    let failed = false;
     const cleanup = () => {
       try { if (audio) { audio.onended = null; audio.onerror = null; } } catch { /* ignore */ }
       try { if (url) URL.revokeObjectURL(url); } catch { /* ignore */ }
       if (state.currentAudio === audio) { state.currentAudio = null; state.currentAudioUrl = null; }
+      state.currentPlaybackResolve = null;
     };
     try {
       const r = await fetch('/api/voice/tts', {
@@ -225,7 +240,7 @@ export const voice = {
       });
       if (!r.ok) throw new Error('tts http ' + r.status);
       const doc = await r.json();
-      if (token !== this._seq) { return; }
+      if (token !== this._seq) return;
       const bin = atob(String(doc.audio_base64 || ''));
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -236,14 +251,19 @@ export const voice = {
       state.currentAudioUrl = url;
       const style = STYLES[opts.style || 'warm'] || STYLES.warm;
       audio.volume = style.volume;
-      audio.onended = () => { cleanup(); if (token === this._seq) opts.onEnd?.(); };
-      audio.onerror = () => { cleanup(); if (token === this._seq) this._speakLocal(text, lang, opts, token); };
-      opts.onStart?.();
-      await audio.play();
+      // honour the fine-trim dial on neural audio too
+      audio.playbackRate = Math.max(0.8, Math.min(1.25, opts.rateMultiplier || 1));
+      await new Promise((resolvePlayback) => {
+        state.currentPlaybackResolve = resolvePlayback;
+        audio.onended = () => { cleanup(); if (token === this._seq) opts.onEnd?.(); resolvePlayback(); };
+        audio.onerror = () => { failed = true; cleanup(); resolvePlayback(); };
+        opts.onStart?.();
+        audio.play().catch(() => { failed = true; cleanup(); resolvePlayback(); });
+      });
+      if (failed && token === this._seq) return this._speakLocal(text, lang, opts, token);
     } catch {
-      cleanup();
       if (token !== this._seq) return;
-      this._speakLocal(text, lang, opts, token);
+      return this._speakLocal(text, lang, opts, token);
     }
   },
 
@@ -252,41 +272,44 @@ export const voice = {
    * breaths, sentence-final slowing, gentle volume. Cancellation-token guarded.
    */
   _speakLocal(text, lang, opts, token) {
-    const synth = this.supported ? window.speechSynthesis : null;
-    if (!synth) { opts.onEnd?.(); return; }
-    const style = STYLES[opts.style || 'warm'] || STYLES.warm;
-    const pros = PROSODY[lang] || PROSODY.en;
-    const rate = Math.max(0.5, Math.min(1.5, pros.rate * style.rate * (opts.rateMultiplier || 1)));
-    const spoken = normalizeForSpeech(text, lang);
-    const parts = chunkSoft(spoken);
-    if (!parts.length) { opts.onEnd?.(); return; }
-    const chosen = this.chosen(lang);
-    let started = false;
-    let i = 0;
-    const speakNext = () => {
-      if (token !== this._seq) return;
-      if (i >= parts.length) { opts.onEnd?.(); return; }
-      const part = parts[i++];
-      const isLast = i >= parts.length;
-      const u = new SpeechSynthesisUtterance(part.text);
-      u.lang = chosen ? chosen.lang : (LANG_LOCALES[lang] || 'en-IN');
-      if (chosen) u.voice = chosen;
-      // sentence-final lengthening: the closing phrase is a touch slower
-      u.rate = Math.max(0.5, Math.min(1.5, rate * (isLast && parts.length > 1 ? 0.96 : 1)));
-      u.pitch = pros.pitch;
-      u.volume = i === 1 ? style.volume - 0.03 : style.volume; // gentle attack
-      u.onstart = () => { if (!started) { started = true; opts.onStart?.(); } };
-      u.onend = u.onerror = () => {
-        if (token !== this._seq) return;
-        if (i < parts.length) {
-          const breath = parts[i - 1].pause === 'phrase' ? style.phraseBreathMs : style.sentenceBreathMs;
-          setTimeout(speakNext, breath);
-        } else opts.onEnd?.();
+    return new Promise((resolve) => {
+      const synth = this.supported ? window.speechSynthesis : null;
+      if (!synth) { opts.onEnd?.(); resolve(); return; }
+      const style = STYLES[opts.style || 'warm'] || STYLES.warm;
+      const pros = PROSODY[lang] || PROSODY.en;
+      const rate = Math.max(0.5, Math.min(1.5, pros.rate * style.rate * (opts.rateMultiplier || 1)));
+      const spoken = normalizeForSpeech(text, lang);
+      const parts = chunkSoft(spoken);
+      if (!parts.length) { opts.onEnd?.(); resolve(); return; }
+      const chosen = this.chosen(lang);
+      let started = false;
+      let i = 0;
+      const finish = () => { opts.onEnd?.(); resolve(); };
+      const speakNext = () => {
+        if (token !== this._seq) { resolve(); return; }
+        if (i >= parts.length) { finish(); return; }
+        const part = parts[i++];
+        const isLast = i >= parts.length;
+        const u = new SpeechSynthesisUtterance(part.text);
+        u.lang = chosen ? chosen.lang : (LANG_LOCALES[lang] || 'en-IN');
+        if (chosen) u.voice = chosen;
+        // sentence-final lengthening: the closing phrase is a touch slower
+        u.rate = Math.max(0.5, Math.min(1.5, rate * (isLast && parts.length > 1 ? 0.96 : 1)));
+        u.pitch = pros.pitch;
+        u.volume = i === 1 ? style.volume - 0.03 : style.volume; // gentle attack
+        u.onstart = () => { if (!started) { started = true; opts.onStart?.(); } };
+        u.onend = u.onerror = () => {
+          if (token !== this._seq) { resolve(); return; }
+          if (i < parts.length) {
+            const breath = parts[i - 1].pause === 'phrase' ? style.phraseBreathMs : style.sentenceBreathMs;
+            setTimeout(speakNext, breath);
+          } else finish();
+        };
+        synth.speak(u);
       };
-      synth.speak(u);
-    };
-    speakNext();
-    setTimeout(() => { if (token === this._seq && !started) opts.onEnd?.(); }, 4000);
+      speakNext();
+      setTimeout(() => { if (token === this._seq && !started) finish(); }, 4000);
+    });
   },
 
   cancel() {
@@ -296,6 +319,11 @@ export const voice = {
       state.currentAudio = null;
     }
     if (state.currentAudioUrl) { try { URL.revokeObjectURL(state.currentAudioUrl); } catch { /* ignore */ } state.currentAudioUrl = null; }
+    if (state.currentPlaybackResolve) {
+      const resolvePlayback = state.currentPlaybackResolve;
+      state.currentPlaybackResolve = null;
+      try { resolvePlayback(); } catch { /* ignore */ }
+    }
     if (this.supported) { try { window.speechSynthesis.cancel(); } catch { /* ignore */ } }
   },
 };

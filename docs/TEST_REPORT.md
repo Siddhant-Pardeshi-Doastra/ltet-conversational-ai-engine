@@ -14,8 +14,8 @@ checked 46 files, 0 failures
 > npm test   (node --test tests/engine.test.js tests/conversation.test.js
               tests/security.test.js tests/postcall.test.js tests/api.test.js
               tests/live-mode.test.js tests/voiceapi.test.js)
-# tests 95
-# pass 95
+# tests 97
+# pass 97
 # fail 0
 ```
 
@@ -23,7 +23,7 @@ CI: `.github/workflows/ci.yml` repeats lint + tests + a seed reproducibility che
 on push/PR (Node 22, `npm ci`). CI status must be read from the GitHub Actions run
 for the pushed commit — the workflow file alone is not evidence of a pass.
 
-## Coverage by area (95 tests)
+## Coverage by area (97 tests)
 
 | Suite | Focus | Highlights |
 |---|---|---|
@@ -33,7 +33,7 @@ for the pushed commit — the workflow file alone is not evidence of a pass.
 | postcall (8) | durability | exactly-once log/history; duplicate webhook + job replay; crash recovery; alert dedupe across calls; analytics reconciliation; daily/weekly reports; governed retention; policy draft→approve→publish→rollback |
 | api (7) | surface | auth; health/readiness honesty; 401s; stage-scoped claim context; PS masking everywhere; search+tags; demo tools demo-only |
 | live-mode (4) | separate process | demo tools 403; readiness fails with blockers; verification fails closed without OTP provider; identity returns none |
-| voiceapi (7) | neural-voice bridge | FRS-core language coverage incl. Odia→od-IN mapping; Saaras excludes ur; status endpoint leaks no key material; TTS/STT without key fail 503 explicitly; unsupported language + empty/oversize text rejected 400 pre-provider; unreachable provider → explicit 502 (never fabricated audio) |
+| voiceapi (9) | neural-voice bridge | FRS-core language coverage incl. Odia→od-IN mapping; Saaras excludes ur; status endpoint leaks no key material; TTS/STT without key fail 503 explicitly; unsupported language + empty/oversize text rejected 400 pre-provider; unreachable provider → explicit 502 (never fabricated audio); **playback queue: multi-bubble replies speak sequentially, never overlapping; cancel drops queued replies** |
 | language packs (in engine) | FR-37 | 12 packs present; only English native_approved; 11 draft_translation with English fallback |
 
 ## Defects found and fixed during the run (evidence of testing, not hidden)

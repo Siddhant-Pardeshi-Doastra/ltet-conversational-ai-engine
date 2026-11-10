@@ -77,10 +77,55 @@ test('stt with a key and an unreachable provider fails explicitly (502)', async 
 
 test('tts with a key and an unreachable provider fails explicitly (502)', async () => {
   process.env.SARVAM_API_KEY = 'test-key-placeholder';
+  process.env.SARVAM_URL = 'http://127.0.0.1:9/';
   process.env.SARVAM_TTS_URL = 'http://127.0.0.1:9/';
   try {
     const r = await t.call('POST', '/api/voice/tts', { text: 'hello there', lang: 'en' });
     assert.equal(r.status, 502);
     assert.equal(r.json.error, 'voice_provider_failed');
-  } finally { noKey(); delete process.env.SARVAM_TTS_URL; }
+  } finally { noKey(); delete process.env.SARVAM_URL; delete process.env.SARVAM_TTS_URL; }
+});
+
+test('voice playback queue: multi-bubble replies never overlap', async () => {
+  const { voice } = await import('../public/voice.js');
+  const spans = [];
+  const originalLocal = voice._speakLocal;
+  voice._speakLocal = async (text, lang, opts, token) => {
+    if (token !== voice._seq) return;
+    const start = Date.now();
+    await new Promise((r) => setTimeout(r, 60));
+    spans.push([start, Date.now()]);
+    opts.onEnd?.();
+  };
+  try {
+    const p1 = voice.speak('first reply', 'en');
+    const p2 = voice.speak('second reply', 'en');
+    const p3 = voice.speak('third reply', 'en');
+    await Promise.all([p1, p2, p3]);
+  } finally { voice._speakLocal = originalLocal; }
+  assert.equal(spans.length, 3, 'all three replies spoke');
+  for (let i = 1; i < spans.length; i++) {
+    assert.ok(spans[i][0] >= spans[i - 1][1],
+      'reply ' + (i + 1) + ' must start only after reply ' + i + ' finishes');
+  }
+});
+
+test('voice cancel flushes the queue without speaking queued replies', async () => {
+  const { voice } = await import('../public/voice.js');
+  const spoken = [];
+  const originalLocal = voice._speakLocal;
+  voice._speakLocal = async (text, lang, opts, token) => {
+    if (token !== voice._seq) return;
+    spoken.push(text);
+    await new Promise((r) => setTimeout(r, 40));
+    opts.onEnd?.();
+  };
+  try {
+    voice.speak('this one plays', 'en');
+    await new Promise((r) => setTimeout(r, 90)); // let the first reply finish
+    voice.speak('this one is cancelled before its turn', 'en');
+    voice.cancel(); // barge-in: invalidates the queued generation
+    await new Promise((r) => setTimeout(r, 120));
+  } finally { voice._speakLocal = originalLocal; }
+  assert.deepEqual(spoken, ['this one plays'], 'the in-flight reply completed; the queued reply was dropped by cancel');
 });

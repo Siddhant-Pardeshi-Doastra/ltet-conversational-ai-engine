@@ -21,11 +21,12 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Siddhant-Pardeshi-Doastra/ltet-conversational-ai-engine/actions/workflows/ci.yml"><img src="https://github.com/Siddhant-Pardeshi-Doastra/ltet-conversational-ai-engine/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/Node.js-≥_22.13-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/SQLite-WAL_mode-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" />
-  <img src="https://img.shields.io/badge/Express-v4-000000?style=flat-square&logo=express&logoColor=white" alt="Express" />
-  <img src="https://img.shields.io/badge/Tests-78_passing-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-97_passing-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/Languages-22-blue?style=flat-square" alt="Languages" />
+  <img src="https://img.shields.io/badge/Neural_Voice-Sarvam_AI_optional-7C4DFF?style=flat-square" alt="Neural Voice" />
   <img src="https://img.shields.io/badge/API_Keys-zero_required-success?style=flat-square" alt="Zero API Keys" />
   <img src="https://img.shields.io/badge/License-UNLICENSED-red?style=flat-square" alt="License" />
 </p>
@@ -155,6 +156,11 @@ npm start
 ```
 
 Or in **one step**: `npm run demo` (reset + start)
+
+> 🗣️ **Optional neural voice:** add `SARVAM_API_KEY=…` to a local `.env` (copy from
+> `.env.example`) and restart — replies switch to Sarvam Bulbul neural TTS and live
+> listening to Saaras transcription. Everything works without it: the same UI runs
+> on the built-in soft device-voice channel.
 
 <br/>
 
@@ -301,6 +307,29 @@ Caller        Engine                         Portal(mock)          Worker
 
 ---
 
+## 🗣️ Voice Engine — Neural When You Want It, Deterministic Always
+
+The console ships with a **soft, human-grade device voice channel** out of the box (speech normalization — "₹24,500.00" is spoken as *"24,500 rupees"*, claim IDs spelled letter-by-letter — phrase-level breathing, per-language prosody, Warm/Standard/Crisp styles, and a sequential playback queue so multi-sentence replies never clip each other).
+
+Want studio-grade neural audio? Drop a **Sarvam AI** key into a local `.env` (never committed):
+
+```ini
+SARVAM_API_KEY=your-key-here        # optional — everything works without it
+```
+
+| | Without a key (default) | With `SARVAM_API_KEY` |
+|---|---|---|
+| Replies spoken by | Device voices (soft channel) | **Sarvam Bulbul neural TTS** — 11 catalogue languages incl. Odia (`od-IN`) |
+| Listening transcribed by | Browser recognition engine | **Sarvam Saaras STT** (server-side, 16 kHz WAV) |
+| Languages outside the provider | Device voices | Device voices (coverage shown honestly in the UI) |
+| Failure behaviour | — | Seamless fallback to the device channel — the conversation never stalls |
+
+The key is read from the environment at call time — never logged, never sent to the browser, never committed. The audio bridges are rate-limited and length-capped because the upstream provider is metered. `/api/voice/status` reports which engine is live.
+
+<br/>
+
+---
+
 ## 🖥️ Staff Console — 8 Screens
 
 | Screen | What It Does |
@@ -347,6 +376,7 @@ Copy `.env.example` → `.env`. Defaults run the demo safely.
 |:---|:---|
 | `LTET_MODE` | `demo` or `live` — live mode with missing config **fails readiness** (no silent fallback) |
 | `SESSION_SECRET` | Required in live mode |
+| `SARVAM_API_KEY` | Optional — neural voice replies (Bulbul) + server-side listening (Saaras); never committed |
 | `IDENTITY_API_URL`, `PORTAL_CLAIMS_API_URL`, `FINANCE_API_URL`, `OTP_PROVIDER_URL` | Live integration endpoints |
 | `ENABLE_CALL_RECORDINGS` | Off by default pending consent/storage policy |
 

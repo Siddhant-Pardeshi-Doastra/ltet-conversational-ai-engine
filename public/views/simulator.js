@@ -77,7 +77,7 @@ export async function renderSimulator(root, params = {}) {
             <select id="caller-preset"><option value="">— pick a scenario —</option>
               ${presets.map((p, i) => `<option value="${i}">${esc(p.label)}</option>`).join('')}</select></label>
           <div class="mt flex">
-            <label class="field grow" style="margin:0"><span>Language — <span id="lang-count"></span><br/><span class="small muted" id="voice-availability"></span></span>
+            <label class="field grow" style="margin:0"><span>Language — <span id="lang-count"></span></span>
               <select id="sim-lang">
                 <option value="auto">Auto-detect</option>
                 <optgroup label="Core catalogue">${coreOpts}</optgroup>
@@ -88,6 +88,7 @@ export async function renderSimulator(root, params = {}) {
             <label class="field" style="margin:0;width:96px"><span>Fine trim</span>
               <select id="sim-rate"><option value="0.9">0.9×</option><option value="1" selected>1×</option><option value="1.1">1.1×</option></select></label>
           </div>
+          <div class="small muted" id="voice-availability" style="margin-top:6px"></div>
           <div class="mt flex">
             <label class="field grow" style="margin:0"><span>Assistant voice <span class="pill ok" id="voice-grade" style="margin-left:6px">—</span></span>
               <select id="sim-voice"><option value="">Auto — most human available</option></select></label>

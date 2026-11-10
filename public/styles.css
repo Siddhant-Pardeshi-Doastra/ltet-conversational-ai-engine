@@ -519,3 +519,17 @@ body {
 /* call setup: consistent label rhythm */
 .sim-setup .field { margin-bottom: 10px; }
 .sim-setup .field:last-child { margin-bottom: 0; }
+
+/* conversation bubbles glide in (subtle, enterprise-appropriate) */
+.bubble { animation: fadeUp 0.22s var(--ease-out-soft) both; }
+
+/* live-voice button breathes while listening */
+@keyframes livePulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(20, 145, 155, 0.18); }
+  50% { box-shadow: 0 0 0 6px rgba(20, 145, 155, 0.32); }
+}
+.btn.live-on { animation: livePulse 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .btn.live-on { animation: none; }
+  .bubble { animation: none; }
+}
