@@ -11,11 +11,12 @@ const { createApp } = await import('../server/app.js');
 const { getDb, get } = await import('../server/db.js');
 const { seedDefaultPolicy } = await import('../server/services/policy.js');
 const { createStaffUser, staffCount } = await import('../server/auth/sessions.js');
+const { DEMO_STAFF_PASSWORD } = await import('../server/auth/demo-credentials.js');
 
 getDb();
 seedDefaultPolicy();
 // a minimal live-mode staff identity (no synthetic portal data is seeded in live)
-createStaffUser({ id: 'USR-LIVE-ADMIN', username: 'admin1', displayName: 'Live Admin', role: 'admin', password: 'Demo#Pass1' });
+createStaffUser({ id: 'USR-LIVE-ADMIN', username: 'admin1', displayName: 'Live Admin', role: 'admin', password: DEMO_STAFF_PASSWORD });
 
 const app = createApp();
 const server = app.listen(0, '127.0.0.1');
@@ -25,7 +26,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 async function call(method, path, { body, staff = 'admin1' } = {}) {
   const headers = { 'content-type': 'application/json' };
   if (staff) {
-    const login = await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'admin1', password: 'Demo#Pass1' }) });
+    const login = await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'admin1', password: DEMO_STAFF_PASSWORD }) });
     const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
     if (cookie) headers.cookie = cookie;
   }

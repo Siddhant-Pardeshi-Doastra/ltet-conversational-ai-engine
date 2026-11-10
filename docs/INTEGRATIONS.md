@@ -17,8 +17,8 @@ DOASTRA proposals until LTET approves them).
 | IR-08 change events | not in Release 1 scope | analytics derive from engine records | future feed | — |
 | IR-09 call/summary/history/alert API | local records + routes | local | LTET contract pending | — |
 | IR-10 processor notifications | work queues (+optional email/SMS later) | queues | provider config required | queues remain the delivery mechanism |
-| IR-11 ASR | `adapters/speech.js` + simulator | browser SpeechRecognition / typed text | `ASR_PROVIDER_URL` | typed-input fallback labelled in UI |
-| IR-12 TTS | simulator | browser SpeechSynthesis | `TTS_PROVIDER_URL` | text-only replies |
+| IR-11 ASR | `adapters/speech.js` + simulator | browser SpeechRecognition / typed text; **neural: `adapters/sarvam.js` (Saaras) when `SARVAM_API_KEY` is set** | `SARVAM_API_KEY` (or `ASR_PROVIDER_URL`) | typed-input fallback labelled in UI; unconfigured status is explicit |
+| IR-12 TTS | simulator | browser SpeechSynthesis (soft channel); **neural: `adapters/sarvam.js` (Bulbul) via metered `/api/voice/tts`** | `SARVAM_API_KEY` (or `TTS_PROVIDER_URL`) | device-voice fallback seamless; coverage per language shown in UI; key never leaves the server |
 | IR-13 structured LLM | `adapters/speech.js` (classifier contract) | deterministic no-key parser | `LLM_PROVIDER_URL` (classify/phrase only) | deterministic templates always usable |
 | IR-14 analytics store | `services/analytics.js` | SQLite-derived | export/BI sync later | — |
 | IR-15 portal roles/credentials | `auth/sessions.js` | seeded demo users | SSO adapter (documented, not built) | staff auth required |

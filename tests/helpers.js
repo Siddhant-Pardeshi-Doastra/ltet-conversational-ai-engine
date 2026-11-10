@@ -17,6 +17,7 @@ export async function startApp() {
   const { seedDefaultPolicy } = await import('../server/services/policy.js');
   const { recoverStaleJobs } = await import('../server/services/postcall.js');
   const { getDb } = await import('../server/db.js');
+  const { DEMO_STAFF_PASSWORD } = await import('../server/auth/demo-credentials.js');
   getDb();
   seed({ force: true });
   seedDefaultPolicy();
@@ -31,7 +32,7 @@ export async function startApp() {
   async function loginStaff(username) {
     const login = await fetch(`${base}/api/auth/login`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ username, password: 'Demo#Pass1' }),
+      body: JSON.stringify({ username, password: DEMO_STAFF_PASSWORD }),
     });
     if (!login.ok) return null;
     const cookie = (login.headers.get('set-cookie') || '').split(';')[0];

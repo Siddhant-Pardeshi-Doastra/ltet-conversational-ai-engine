@@ -490,3 +490,32 @@ body {
 
 /* tables: bolder headers */
 .table th { color: var(--navy-600); font-weight: 750; }
+
+/* =====================================================================
+   Neural voice bridge + tidy call setup (Sarvam AI)
+   ===================================================================== */
+
+/* one-tap utterance chips — makes a live demo effortless */
+.hint-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 9px; }
+.hint-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.2px; color: var(--ink-soft); }
+.hint-chip {
+  font-size: 12px; padding: 3px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(79, 179, 165, 0.45); background: rgba(79, 179, 165, 0.10); color: #0e5a55;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.hint-chip:hover { background: rgba(79, 179, 165, 0.22); transform: translateY(-1px); }
+
+/* keypad tucks away until a code is actually expected */
+.keypad-wrap { margin-top: 10px; border-top: 1px dashed rgba(120, 150, 170, 0.35); padding-top: 7px; }
+.keypad-wrap summary {
+  cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--navy-600);
+  user-select: none; list-style: none;
+}
+.keypad-wrap summary::marker { content: ''; }
+.keypad-wrap summary::before { content: '▸ '; color: var(--teal-600); }
+.keypad-wrap[open] summary::before { content: '▾ '; }
+.keypad-wrap[open] summary { margin-bottom: 4px; }
+
+/* call setup: consistent label rhythm */
+.sim-setup .field { margin-bottom: 10px; }
+.sim-setup .field:last-child { margin-bottom: 0; }

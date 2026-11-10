@@ -25,3 +25,6 @@ Thumbs.db
 *.pptx
 *.docx
 .zcode-site/
+
+# Security-scanner local state
+.mimosa/

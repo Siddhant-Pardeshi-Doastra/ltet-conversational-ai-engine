@@ -46,7 +46,35 @@ const state = {
   loaded: false,
   preference: {}, // lang -> voiceURI (user-picked)
   listeners: [],
+  currentAudio: null,
+  currentAudioUrl: null,
 };
+
+// Neural voice bridge (Sarvam AI) — probed once per page load. When the server
+// has SARVAM_API_KEY, replies are rendered by Bulbul neural TTS and played as
+// audio; languages outside the provider's catalogue keep device voices, and
+// any fetch failure falls back to the device channel without a seam.
+export const neural = {
+  probed: false, tts: false, stt: false,
+  ttsLangs: [], sttLangs: [], engine: 'device', speakers: [],
+};
+
+export async function probeNeural() {
+  if (neural.probed) return neural;
+  neural.probed = true;
+  try {
+    const r = await fetch('/api/voice/status');
+    if (!r.ok) return neural;
+    const s = await r.json();
+    neural.tts = !!s.neural_tts;
+    neural.stt = !!s.neural_stt;
+    neural.ttsLangs = Array.isArray(s.tts_langs) ? s.tts_langs : [];
+    neural.sttLangs = Array.isArray(s.stt_langs) ? s.stt_langs : [];
+    neural.engine = s.engine || 'device';
+    neural.speakers = Array.isArray(s.speakers) ? s.speakers : [];
+  } catch { /* offline/blocked: device voices remain */ }
+  return neural;
+}
 
 function scoreVoice(v, lang) {
   const locale = LANG_LOCALES[lang] || 'en-IN';
@@ -111,6 +139,9 @@ export function chunkSoft(text) {
 export const voice = {
   get supported() { return typeof window !== 'undefined' && 'speechSynthesis' in window; },
 
+  /** Live view of the neural bridge state (see probeNeural). */
+  get neural() { return neural; },
+
   init() {
     if (!this.supported) return Promise.resolve([]);
     if (state.loaded) return Promise.resolve(state.voices);
@@ -166,14 +197,63 @@ export const voice = {
 
   _seq: 0,
 
-  /**
-   * Soft, human speech: normalized text, phrase cadence with variable breaths,
-   * sentence-final slowing, gentle volume. Cancellation-token guarded.
-   */
+  /** Route the reply: neural bridge first when available, device channel otherwise. */
   speak(text, lang, opts = {}) {
+    const token = ++this._seq;
+    if (neural.tts && neural.ttsLangs.includes(lang) && opts.neural !== false) {
+      this._speakNeural(text, lang, opts, token);
+      return;
+    }
+    this._speakLocal(text, lang, opts, token);
+  },
+
+  /** Neural bridge: the server renders Bulbul audio; any failure falls back
+   *  to the device channel so the conversation never stalls. */
+  async _speakNeural(text, lang, opts, token) {
+    let url = null;
+    let audio = null;
+    const cleanup = () => {
+      try { if (audio) { audio.onended = null; audio.onerror = null; } } catch { /* ignore */ }
+      try { if (url) URL.revokeObjectURL(url); } catch { /* ignore */ }
+      if (state.currentAudio === audio) { state.currentAudio = null; state.currentAudioUrl = null; }
+    };
+    try {
+      const r = await fetch('/api/voice/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, lang }),
+      });
+      if (!r.ok) throw new Error('tts http ' + r.status);
+      const doc = await r.json();
+      if (token !== this._seq) { return; }
+      const bin = atob(String(doc.audio_base64 || ''));
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: doc.mime || 'audio/wav' });
+      url = URL.createObjectURL(blob);
+      audio = new Audio(url);
+      state.currentAudio = audio;
+      state.currentAudioUrl = url;
+      const style = STYLES[opts.style || 'warm'] || STYLES.warm;
+      audio.volume = style.volume;
+      audio.onended = () => { cleanup(); if (token === this._seq) opts.onEnd?.(); };
+      audio.onerror = () => { cleanup(); if (token === this._seq) this._speakLocal(text, lang, opts, token); };
+      opts.onStart?.();
+      await audio.play();
+    } catch {
+      cleanup();
+      if (token !== this._seq) return;
+      this._speakLocal(text, lang, opts, token);
+    }
+  },
+
+  /**
+   * Soft, human device speech: normalized text, phrase cadence with variable
+   * breaths, sentence-final slowing, gentle volume. Cancellation-token guarded.
+   */
+  _speakLocal(text, lang, opts, token) {
     const synth = this.supported ? window.speechSynthesis : null;
     if (!synth) { opts.onEnd?.(); return; }
-    const token = ++this._seq;
     const style = STYLES[opts.style || 'warm'] || STYLES.warm;
     const pros = PROSODY[lang] || PROSODY.en;
     const rate = Math.max(0.5, Math.min(1.5, pros.rate * style.rate * (opts.rateMultiplier || 1)));
@@ -211,6 +291,11 @@ export const voice = {
 
   cancel() {
     this._seq += 1;
+    if (state.currentAudio) {
+      try { state.currentAudio.pause(); state.currentAudio.src = ''; } catch { /* ignore */ }
+      state.currentAudio = null;
+    }
+    if (state.currentAudioUrl) { try { URL.revokeObjectURL(state.currentAudioUrl); } catch { /* ignore */ } state.currentAudioUrl = null; }
     if (this.supported) { try { window.speechSynthesis.cancel(); } catch { /* ignore */ } }
   },
 };

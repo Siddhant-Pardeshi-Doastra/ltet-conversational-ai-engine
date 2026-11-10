@@ -4,15 +4,29 @@ Setup: `npm install && npm run demo` → open `http://127.0.0.1:8787` → sign i
 **admin1 / Demo#Pass1**. The workspace runs on its own managed dataset. If anything looks stale, use
 **Scenarios & Health → Reset workspace data**.
 
+**Optional — neural voice (Sarvam AI, Bulbul TTS + Saaras STT).** Put the paid
+key in a local `.env` as `SARVAM_API_KEY=…` (never commit it; see
+`.env.example`) and restart. The Call Simulator header then shows **AI voice ·
+neural**: replies are rendered by Bulbul in the caller's language, and
+**🎙 Live voice** listens through server-side Saaras transcription (a "Transcribing…" moment
+replaces the browser's own engine). 11 catalogue languages have neural
+coverage (en hi bn mr ta te gu pa ml kn or — Odia maps to Sarvam's `od-IN`);
+the rest stay on device voices, and the availability line states this openly.
+Without a key nothing changes: the same interface falls back to the soft
+device-voice channel, and `/api/voice/status` reports `engine: "device"`.
+The key is read from the environment at call time — never logged, never sent
+to the browser, never committed. The audio bridges are rate-limited and
+length-capped because the upstream provider is metered.
+
 | # | Scenario | Steps | Expected |
 |---|---|---|---|
-| 1 | Verified employee enquiry (2 min) | Call Simulator → preset **Credited payment (Vikram)** → Start call → type "yes" → "yes" → read OTP from **DEMO MOCK SMS INBOX** → keypad digits → ✓ → "what is my payment status" | Masked PS confirmation; OTP only in the labelled inbox; approval stated FIRST; ₹24,500.00 + date + bank reference; more-help loop |
+| 1 | Verified employee enquiry (2 min) | Call Simulator → scenario **Credited payment (Vikram)** → Start call → type "yes" → "yes" → read OTP from the **Secure Message Inbox** → keypad digits (the keypad opens by itself when a code is expected) → ✓ → "what is my payment status" — or tap a **Try:** chip | Masked PS confirmation; OTP only in the labelled inbox; approval stated FIRST; ₹24,500.00 + date + bank reference; more-help loop |
 | 1b | AGENT MODE: free-form speech (2 min) | Still verified as Vikram: toggle **🎙 Live voice: On** and speak naturally — *"I have been waiting for my money and still nothing has arrived, this is really frustrating"* | Empathetic acknowledgment → **exhaustive resolution search** over live data → authoritative credited answer. With the delay drill on: threshold explained + payments team flagged + human offered. With the portal drill on: search exhausts → transfer **with full context** |
-| 2 | Claim stage + open query (1 min) | End call; preset **Linked employee (Priya…)**; verify; "claim status" | "PMS Processor" stage + open query read out + directed to the portal |
-| 3 | Direct payment enquiry on approved claim | Preset **Credited payment (Vikram)** again; verify; "payment status" | Same facts; no re-verification required within the session |
-| 4 | Failed/delayed payment → alert (2 min) | Scenarios → enable fault **delay_payment** → preset **Credited payment (Vikram)** …; or verify **Linked employee (Arjun…)**-style flows for failed via **Ananya** seed (+91 55555 50006 via caller-number box) | Recorded reason; escalation offered; **Work Queue** shows payment_failed / payment_delayed alert in PMS queue |
-| 5 | Legitimate scoped beneficiary (2 min) | Preset **Legit beneficiary (Meera, granted)** → "I am calling as a beneficiary" → keypad employee PS **010077** → "yes" → OTP → "payment status" | Only granted claim CLM-10020; scoped fields; metadata recorded |
-| 6 | Impostor denied (1 min) | Preset **Impostor beneficiary (no binding)** → "I am the beneficiary" → keypad **004321** | Generic fail-closed message; no names/claims; denial alert |
+| 2 | Claim stage + open query (1 min) | End call; scenario **Linked employee (Priya…)**; verify; "claim status" | "PMS Processor" stage + open query read out + directed to the portal |
+| 3 | Direct payment enquiry on approved claim | Scenario **Credited payment (Vikram)** again; verify; "payment status" | Same facts; no re-verification required within the session |
+| 4 | Failed/delayed payment → alert (2 min) | Scenarios → enable fault **delay_payment** → scenario **Credited payment (Vikram)** …; or verify **Linked employee (Arjun…)**-style flows for failed via **Ananya** seed (+91 55555 50006 via caller-line box) | Recorded reason; escalation offered; **Work Queue** shows payment_failed / payment_delayed alert in PMS queue |
+| 5 | Legitimate scoped beneficiary (2 min) | Scenario **Legit beneficiary (Meera, granted)** → "I am calling as a beneficiary" → keypad employee PS **010077** → "yes" → OTP → "payment status" | Only granted claim CLM-10020; scoped fields; metadata recorded |
+| 6 | Impostor denied (1 min) | Scenario **Impostor beneficiary (no binding)** → "I am the beneficiary" → keypad **004321** | Generic fail-closed message; no names/claims; denial alert |
 | 7 | Outage → human callback (1 min) | Enable fault **finance_outage** → verify Vikram → "payment status" → "callback" | Truthful outage message; callback request created; disable the fault after |
 | 8 | Durable records (2 min) | Open **Calls** → click the latest log | Immutable summary, claimed vs verified identity, claim-level entries, document history, answer evidence |
 | 9 | Processor acknowledges (1 min) | Role-chip / sign in as **pms1** → Work Queue → Acknowledge + Close | Persona-scoped queue; actions persist across refresh; audited |

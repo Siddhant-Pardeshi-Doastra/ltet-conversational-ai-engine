@@ -2,7 +2,7 @@
 // telephony adapter uses. Includes the isolated verification-message inbox
 // (SEC-04) and the human-grade browser speech engine.
 import { api, esc, state } from '../app.js';
-import { voice, localeFor } from '../voice.js';
+import { voice, localeFor, probeNeural } from '../voice.js';
 import { LiveMic } from '../mic.js';
 
 let sim = { sessionId: null, busy: false, ttsOn: true, rate: 1, lang: 'auto', state: null, style: 'warm' };
@@ -40,8 +40,15 @@ export async function renderSimulator(root, params = {}) {
         <div class="transcript" id="transcript"><div class="bubble system" style="align-self:center;background:transparent;color:#7c98ad">Conversation will appear here.</div><div class="bubble interim" id="interim-bubble" style="display:none"></div></div>
         <div class="state-line">state: <span class="st" id="state-chip">idle</span> <span id="outcome-chip"></span></div>
         <div class="sim-input">
-          <input type="text" id="utter" placeholder="Type what the caller says (e.g. 'haan', 'meri claim ka status', 'payment status', 'agent')…" />
+          <input type="text" id="utter" placeholder="Type what the caller says…" />
           <button class="btn primary" id="send-btn">Send</button>
+        </div>
+        <div class="hint-chips">
+          <span class="hint-label">Try:</span>
+          <button class="hint-chip" data-hint="mera claim kahan tak pahuncha">mera claim kahan tak pahuncha?</button>
+          <button class="hint-chip" data-hint="payment kab aayega">payment kab aayega?</button>
+          <button class="hint-chip" data-hint="amount galat hai">amount galat hai</button>
+          <button class="hint-chip" data-hint="agent se baat karni hai">agent se baat karni hai</button>
         </div>
         <div class="flex wrap mt">
           <button class="btn sm" id="mic-btn" title="Continuous listening — the agent hears you in real time">🎙 Live voice: Off</button>
@@ -51,18 +58,24 @@ export async function renderSimulator(root, params = {}) {
           <span class="grow"></span>
           <button class="btn danger sm" id="hangup-btn">End call</button>
         </div>
-        <div class="state-line"><span id="key-buffer" style="letter-spacing:2px"></span><span class="grow"></span><span class="small">IVR keypad — digits buffer, ✓ submits, * resends code</span></div>
-        <div class="keypad" id="keypad">
-          ${['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((k) => `<button data-key="${k}">${k}</button>`).join('')}
-          <button data-key="ENTER" style="grid-column: span 3">✓ Enter</button>
-        </div>
-        <div class="small mt" style="color:#7c98ad">Keypad entries during verification are protected: code digits are never stored in the transcript or any record (SEC-04/FR-49).</div>
+        <details id="keypad-wrap" class="keypad-wrap">
+          <summary>Keypad · IVR input — codes stay hidden (SEC-04)</summary>
+          <div class="state-line"><span id="key-buffer" style="letter-spacing:2px"></span><span class="grow"></span><span class="small">digits buffer, ✓ submits, * resends code</span></div>
+          <div class="keypad" id="keypad">
+            ${['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((k) => `<button data-key="${k}">${k}</button>`).join('')}
+            <button data-key="ENTER" style="grid-column: span 3">✓ Enter</button>
+          </div>
+          <div class="small mt" style="color:#7c98ad">During verification, code digits never appear in the transcript or any record (SEC-04/FR-49).</div>
+        </details>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:14px">
-        <div class="card"><div class="card-h"><h3>Caller condition</h3></div><div class="card-b">
-          <label class="field"><span>Calling number (test line)</span><input type="text" id="caller-number" value="+91 55555 50001" /></label>
-          <div class="btn-row">${presets.map((p, i) => `<button class="btn sm" data-preset="${i}">${esc(p.label)}</button>`).join('')}</div>
+        <div class="card sim-setup"><div class="card-h"><h3>Call setup</h3>
+          <div class="right"><span class="pill info" id="voice-source">voice: …</span></div></div><div class="card-b">
+          <label class="field"><span>Caller line (test number)</span><input type="text" id="caller-number" value="+91 55555 50001" /></label>
+          <label class="field"><span>Test caller profile</span>
+            <select id="caller-preset"><option value="">— pick a scenario —</option>
+              ${presets.map((p, i) => `<option value="${i}">${esc(p.label)}</option>`).join('')}</select></label>
           <div class="mt flex">
             <label class="field grow" style="margin:0"><span>Language — <span id="lang-count"></span><br/><span class="small muted" id="voice-availability"></span></span>
               <select id="sim-lang">
@@ -79,9 +92,9 @@ export async function renderSimulator(root, params = {}) {
             <label class="field grow" style="margin:0"><span>Assistant voice <span class="pill ok" id="voice-grade" style="margin-left:6px">—</span></span>
               <select id="sim-voice"><option value="">Auto — most human available</option></select></label>
           </div>
-          <div class="mt">
-            <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="tts-on" checked /> Speak replies (browser TTS)</label>
-            <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="force-busy" /> Simulate all-lines-busy (FR-51)</label>
+          <div class="mt flex wrap" style="gap:18px">
+            <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="tts-on" checked /> Speak replies</label>
+            <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="force-busy" /> All-lines-busy check</label>
           </div>
           <div class="mt btn-row">
             <button class="btn primary" id="start-btn">▶ Start call</button>
@@ -121,12 +134,23 @@ export async function renderSimulator(root, params = {}) {
     if (current) sel.value = current;
     const grade = $('#voice-grade');
     const countEl = $('#voice-availability');
-    if (countEl) countEl.textContent = speakableCount() + ' of ' + (catalogue.frs_core.length + catalogue.extended.length) + ' speak audibly on this device — the rest run in live text';
+    const src = $('#voice-source');
+    const total = catalogue.frs_core.length + catalogue.extended.length;
+    if (src) {
+      if (voice.neural.tts) { src.textContent = 'AI voice · neural'; src.className = 'pill ok'; }
+      else { src.textContent = 'Device voice'; src.className = 'pill info'; }
+    }
+    if (countEl) {
+      countEl.textContent = voice.neural.tts
+        ? `neural voice covers ${voice.neural.ttsLangs.length} of ${total} languages · the rest use device voices`
+        : speakableCount() + ' of ' + total + ' speak audibly on this device — the rest run in live text';
+    }
     if (!voice.supported) { grade.textContent = 'text mode'; grade.className = 'pill muted'; }
+    else if (voice.neural.tts && voice.neural.ttsLangs.includes(lang)) { grade.textContent = 'AI neural'; grade.className = 'pill ok'; }
     else if (voice.isHumanGrade(lang)) { grade.textContent = 'human-grade'; grade.className = 'pill ok'; }
     else { grade.textContent = 'device voice'; grade.className = 'pill info'; }
   };
-  voice.init().then(() => { refreshVoicePicker(); refreshVoicePicker(); /* second pass after voiceschanged */ });
+  voice.init().then(async () => { await probeNeural(); refreshVoicePicker(); refreshVoicePicker(); /* second pass after voiceschanged */ });
   if (typeof window.speechSynthesis !== 'undefined') {
     window.speechSynthesis.onvoiceschanged = () => refreshVoicePicker();
   }
@@ -136,8 +160,15 @@ export async function renderSimulator(root, params = {}) {
   $('#sim-rate').addEventListener('change', (e) => { sim.rate = Number(e.target.value); });
   $('#tts-on').addEventListener('change', (e) => { sim.ttsOn = e.target.checked; });
 
-  root.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => {
-    $('#caller-number').value = presets[Number(b.dataset.preset)].number;
+  $('#caller-preset').addEventListener('change', (e) => {
+    const p = presets[Number(e.target.value)];
+    if (p) $('#caller-number').value = p.number;
+  });
+  // Quick utterance chips: one tap runs a real Hinglish phrase through the engine.
+  root.querySelectorAll('[data-hint]').forEach((b) => b.addEventListener('click', () => {
+    $('#utter').value = b.dataset.hint;
+    if (sim.sessionId) sendUtterance();
+    else $('#utter').focus();
   }));
 
   $('#start-btn').addEventListener('click', async () => {
@@ -188,7 +219,11 @@ export async function renderSimulator(root, params = {}) {
     const map = {
       listening: ['Listening…', 'turn-listen'], thinking: ['Thinking…', 'turn-think'],
       speaking: ['Speaking…', 'turn-speak'], paused: ['Standing by…', 'turn-think'],
-      idle: ['', ''], denied: ['Mic blocked — use typed input', 'turn-off'], unsupported: ['Voice input unsupported — typed input', 'turn-off'],
+      transcribing: ['Transcribing…', 'turn-think'],
+      idle: ['', ''],
+      denied: ['Mic blocked — use typed input', 'turn-off'],
+      unsupported: ['Voice input unsupported — typed input', 'turn-off'],
+      stt_failed: ['Transcription failed — typed input', 'turn-off'],
     };
     const [label, cls] = map[mode] || ['', ''];
     chip.textContent = label;
@@ -196,6 +231,10 @@ export async function renderSimulator(root, params = {}) {
     chip.style.display = label ? '' : 'none';
   };
   mic = new LiveMic({
+    // Neural listening: when the server has a Sarvam key and the language is
+    // covered by Saaras, utterances are transcribed server-side; otherwise the
+    // browser's own recognition engine runs.
+    serverStt: () => voice.neural.stt && voice.neural.sttLangs.includes(sim.lang === 'auto' ? 'en' : sim.lang),
     onFinal: (text) => { sendUtteranceText(text); },
     onInterim: (text) => {
       const b = $('#interim-bubble');
@@ -228,7 +267,7 @@ export async function renderSimulator(root, params = {}) {
     } else {
       const ok = mic.start();
       if (ok !== false && mic.supported) {
-        btn.textContent = '🎙 Live voice: On';
+        btn.textContent = mic.serverStt && mic.serverStt() ? '🎙 Live voice: On · AI' : '🎙 Live voice: On';
         btn.classList.add('live-on');
       }
     }
@@ -332,6 +371,9 @@ export async function renderSimulator(root, params = {}) {
     const vc = $('#verify-card');
     vc.style.display = 'block';
     const v = s.verification || {};
+    // Keypad opens itself exactly when a code is expected, closes once verified.
+    const kw = root.querySelector('#keypad-wrap');
+    if (kw) kw.open = !!v.challenge_active;
     $('#verify-body').innerHTML = `
       <div class="verify-card">
         <span class="pill ${v.verified ? 'ok' : 'muted'}">${v.verified ? 'VERIFIED' : 'NOT VERIFIED'}</span>

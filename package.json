@@ -11,7 +11,7 @@
     "seed": "node server/seed.js --force",
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "test": "node --test tests/engine.test.js tests/conversation.test.js tests/security.test.js tests/postcall.test.js tests/api.test.js tests/live-mode.test.js",
+    "test": "node --test tests/engine.test.js tests/conversation.test.js tests/security.test.js tests/postcall.test.js tests/api.test.js tests/live-mode.test.js tests/voiceapi.test.js",
     "lint": "node scripts/lint.mjs",
     "demo": "node server/seed.js --force && node server/index.js"
   },
