@@ -29,11 +29,26 @@
   <a href="https://github.com/Siddhant-Pardeshi-Doastra/ltet-conversational-ai-engine/actions/workflows/ci.yml"><img src="https://github.com/Siddhant-Pardeshi-Doastra/ltet-conversational-ai-engine/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/Node.js-≥_22.13-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/SQLite-WAL_mode-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" />
-  <img src="https://img.shields.io/badge/Tests-97_passing-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-105_passing-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/Languages-22-blue?style=flat-square" alt="Languages" />
   <img src="https://img.shields.io/badge/Neural_Voice-Sarvam_AI_optional-7C4DFF?style=flat-square" alt="Neural Voice" />
   <img src="https://img.shields.io/badge/API_Keys-zero_required-success?style=flat-square" alt="Zero API Keys" />
   <img src="https://img.shields.io/badge/License-UNLICENSED-red?style=flat-square" alt="License" />
+</p>
+
+<br/>
+
+<!-- ─── Video walkthrough: one click, all features ─── -->
+<p align="center">
+  <a href="docs/walkthrough.mp4">
+    <img src="docs/walkthrough-poster.jpg" alt="▶ Watch the narrated walkthrough — click to play" width="88%" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="docs/walkthrough.mp4"><img src="https://img.shields.io/badge/▶_WATCH-The_Full_Video_Walkthrough-FF0000?style=for-the-badge" alt="Watch the full video walkthrough" /></a>
+  &nbsp;
+  <em><b>3 minutes · narrated · every feature on screen</b> — dial-in verification, claims &amp; payments,<br/>agent-mode resolution, 22 languages, security hardening, and the staff console.</em>
 </p>
 
 <br/>

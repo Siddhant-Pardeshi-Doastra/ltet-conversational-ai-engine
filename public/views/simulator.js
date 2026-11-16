@@ -407,9 +407,10 @@ export async function renderSimulator(root, params = {}) {
     const vc = $('#verify-card');
     vc.style.display = 'block';
     const v = s.verification || {};
-    // Keypad opens itself exactly when a code is expected, closes once verified.
+    // Keypad opens itself when a code is expected; it never force-closes —
+    // the caller may keep it open for PS/DOB entry (FR-55 dial-in flow).
     const kw = root.querySelector('#keypad-wrap');
-    if (kw) kw.open = !!v.challenge_active;
+    if (kw && v.challenge_active) kw.open = true;
     $('#verify-body').innerHTML = `
       <div class="verify-card">
         <span class="pill ${v.verified ? 'ok' : 'muted'}">${v.verified ? 'VERIFIED' : 'NOT VERIFIED'}</span>
