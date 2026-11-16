@@ -13,7 +13,7 @@ import { parseUtterance } from './intents.js';
 import { t, languageName, allLanguages } from './languages.js';
 import * as portal from '../adapters/portal.js';
 import { createChallenge, verifyChallenge, resendChallenge, hasActiveChallenge } from '../adapters/otp.js';
-import { buildClaimStagePlan, buildPaymentPlans, validateAndRender } from './answers.js';
+import { buildClaimStagePlan, buildPaymentPlans, buildRejectionPlan, validateAndRender } from './answers.js';
 import { raiseAlert } from '../services/alerts.js';
 import { interpret, acknowledge, wrapLine } from './conversation.js';
 import { runResolutionSearch } from './resolution.js';
@@ -21,6 +21,7 @@ import { nowIso } from '../util.js';
 
 export const STATES = [
   'greeting', 'language', 'caller_type', 'ident_confirm', 'ident_enter', 'ident_enter_confirm',
+  'ident_knowledge_name', 'ident_knowledge_dob',
   'benef_ps', 'benef_name', 'challenge_pending', 'claims_selection', 'claim_select_confirm',
   'claim_answer', 'more_help', 'no_claims', 'transfer_pending', 'callback_offer',
   'busy_fallback', 'ending', 'ended',
@@ -32,7 +33,9 @@ const ALLOWED_TRANSITIONS = {
   caller_type: ['ident_enter', 'benef_ps', 'transfer_pending', 'ending', 'ended'],
   ident_confirm: ['challenge_pending', 'caller_type', 'ident_enter', 'transfer_pending', 'ending', 'ended'],
   ident_enter: ['ident_enter_confirm', 'ident_enter', 'transfer_pending', 'ending', 'ended'],
-  ident_enter_confirm: ['challenge_pending', 'ident_enter', 'transfer_pending', 'ending', 'ended'],
+  ident_enter_confirm: ['ident_knowledge_name', 'challenge_pending', 'ident_enter', 'transfer_pending', 'ending', 'ended'],
+  ident_knowledge_name: ['ident_knowledge_dob', 'ident_knowledge_name', 'transfer_pending', 'ending', 'ended'],
+  ident_knowledge_dob: ['claims_selection', 'no_claims', 'ident_knowledge_name', 'ident_knowledge_dob', 'transfer_pending', 'ending', 'ended'],
   benef_ps: ['benef_name', 'challenge_pending', 'beneficiary_denied', 'transfer_pending', 'ident_benef_retry', 'ending', 'ended'],
   benef_name: ['challenge_pending', 'beneficiary_denied', 'transfer_pending', 'ending', 'ended'],
   beneficiary_denied: ['transfer_pending', 'ending', 'ended'],
@@ -141,7 +144,10 @@ export function handleEvent(session, event, { policy }) {
   if (event.type === 'transfer.result') {
     ctx.transferOutcome = event.connected ? 'connected' : 'failed';
     if (event.connected) {
-      patch.outcome = 'escalated';
+      // FR-28 outcome precedence: a failed verification outranks the transfer.
+      // The warm transfer may complete while a verification-failed call is
+      // ending; the honest outcome is the verification failure, not escalation.
+      patch.outcome = ctx.outcomeHint === 'verification_failed' ? 'verification_failed' : 'escalated';
       patch.ended_at = nowIso();
       effects.push({ type: 'finalize' });
       return finish('ended');
@@ -400,6 +406,14 @@ export function handleEvent(session, event, { policy }) {
         const yes = event.type === 'keypad' ? event.digits === '1' : (p.yes && !p.no);
         const no = event.type === 'keypad' ? event.digits === '2' : (p.no && !p.yes);
         if (yes) {
+          // Knowledge factor (PS + name + DOB) when policy enables it — the
+          // manager dial-in flow. Live mode rejects the flag (validatePolicy),
+          // so the OTP challenge remains the only verified path in production.
+          if (policy.identity?.knowledge_factor === true) {
+            ctx.knowledgeTries = 0;
+            push(say('knowledge_name_ask'));
+            return finish('ident_knowledge_name');
+          }
           return sendChallenge(session, ctx, patch, policy, { say, push, effects, replies }, 'employee');
         }
         if (no) {
@@ -408,6 +422,82 @@ export function handleEvent(session, event, { policy }) {
         }
       }
       return finish(state);
+    }
+
+    case 'ident_knowledge_name': {
+      // Name is captured as spoken text; compared case/whitespace-insensitively
+      // against the record. Keypad input cannot spell a name — ask to speak.
+      if (event.type === 'utterance') {
+        const name = String(event.text || '').replace(/[^\p{L}\s.'-]/gu, ' ').replace(/\s+/g, ' ').trim();
+        if (name.length < 3) {
+          ctx.recognitionFailures += 1;
+          if (ctx.recognitionFailures >= 2 && policy.human_handoff.on_two_recognition_failures) return humanHandoff(ctx, effects, say, 'ident_knowledge_name');
+          push(say('unclear_retry'));
+          push(say('knowledge_name_ask'));
+          return finish('ident_knowledge_name');
+        }
+        ctx.knowledgeName = name;
+        push(say('knowledge_dob_ask'));
+        return finish('ident_knowledge_dob');
+      }
+      if (event.type === 'keypad') {
+        push(say('knowledge_name_ask').map((s) => ({ ...s, text: s.text + ' Please speak your name; the keypad cannot spell it.' })));
+        return finish('ident_knowledge_name');
+      }
+      return finish(state);
+    }
+
+    case 'ident_knowledge_dob': {
+      const dob = event.type === 'keypad' ? dobFromDigits(event.digits) : event.type === 'utterance' ? (dobFromSpeech(event.text) || dobFromDigits((p.digitGroups || []).join(''))) : null;
+      if (!dob) {
+        // An unparsable date during identity verification is a failed
+        // verification attempt (FR-04/FR-56 fail-closed), not a generic
+        // recognition stumble — the same bounded-retry counter applies.
+        ctx.knowledgeTries = (ctx.knowledgeTries || 0) + 1;
+        if (ctx.knowledgeTries >= 2) {
+          patch.verification_result = 'failed';
+          ctx.outcomeHint = 'verification_failed';
+          push(say('knowledge_failed'));
+          ctx.transferRequested = true;
+          effects.push({ type: 'transfer' });
+          return finish('transfer_pending');
+        }
+        push(say('unclear_retry'));
+        push(say('knowledge_dob_ask'));
+        return finish('ident_knowledge_dob');
+      }
+      const verdict = portal.verifyKnowledge(ctx.claimedPsNo, ctx.knowledgeName, dob);
+      effects.push({ type: 'verification_attempt', result: verdict.ok ? 'success' : 'failed', method: 'ps_dob', assurance: 'knowledge_factor', subjectRole: 'employee', subjectPsNo: ctx.claimedPsNo, attemptsUsed: (ctx.knowledgeTries || 0) + 1 });
+      if (verdict.ok) {
+        ctx.verification = {
+          subjectPsNo: ctx.claimedPsNo,
+          subjectRole: 'employee',
+          method: 'ps_dob',
+          assurance: 'knowledge_factor',
+          verifiedAt: nowIso(),
+          grant: ctx.grant,
+        };
+        patch.verified_ps_no = ctx.claimedPsNo;
+        patch.verification_method = 'ps_dob';
+        patch.verification_assurance = 'knowledge_factor';
+        patch.verified_at = ctx.verification.verifiedAt;
+        patch.verification_result = 'success';
+        push(say('verification_success'));
+        return loadClaims(session, ctx, patch, policy, { say, push, effects, replies });
+      }
+      // Fail-closed: one clean retry, then the generic human path (FR-04/FR-56).
+      ctx.knowledgeTries = (ctx.knowledgeTries || 0) + 1;
+      if (ctx.knowledgeTries >= 2) {
+        patch.verification_result = 'failed';
+        ctx.outcomeHint = 'verification_failed';
+        push(say('knowledge_failed'));
+        ctx.transferRequested = true;
+        effects.push({ type: 'transfer' });
+        return finish('transfer_pending');
+      }
+      ctx.knowledgeName = null;
+      push(say('knowledge_mismatch'));
+      return finish('ident_knowledge_name');
     }
 
     case 'benef_ps': {
@@ -813,6 +903,49 @@ function routeIdentification(session, ctx, patch, policy, io) {
   function finishState(s) { return { replies: io.replies, state: s, ctx, patch, effects: io.effects }; }
 }
 
+/** Knowledge-factor DOB capture. Keypad: DDMMYYYY (8 digits). Spoken: numeric
+ *  or "12 April 1968" style (English month names; other languages use the
+ *  keypad). Deterministic only — anything unparsable asks for a retry. */
+const MONTHS = {
+  jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
+  may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8, sep: 9, sept: 9,
+  september: 9, oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12,
+};
+
+function dobFromDigits(digits) {
+  const d = String(digits || '').replace(/\D/g, '');
+  if (d.length !== 8) return null;
+  const dd = Number(d.slice(0, 2));
+  const mm = Number(d.slice(2, 4));
+  const yyyy = Number(d.slice(4));
+  return validDate(dd, mm, yyyy);
+}
+
+function dobFromSpeech(text) {
+  const t = String(text || '').toLowerCase();
+  const m = t.match(/(\d{1,2})\s*(?:st|nd|rd|th)?\s+(?:of\s+)?([a-z]{3,9})\s+(\d{4})/);
+  if (m) {
+    const month = MONTHS[m[2]];
+    if (month) return validDate(Number(m[1]), month, Number(m[3]));
+  }
+  // "1968 April 12" ordering
+  const m2 = t.match(/(\d{4})\s+([a-z]{3,9})\s+(\d{1,2})/);
+  if (m2) {
+    const month = MONTHS[m2[2]];
+    if (month) return validDate(Number(m2[3]), month, Number(m2[1]));
+  }
+  return null;
+}
+
+function validDate(dd, mm, yyyy) {
+  if (!Number.isInteger(dd) || !Number.isInteger(mm) || !Number.isInteger(yyyy)) return null;
+  if (yyyy < 1900 || yyyy > new Date().getFullYear()) return null;
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+  const probe = new Date(Date.UTC(yyyy, mm - 1, dd));
+  if (probe.getUTCMonth() !== mm - 1 || probe.getUTCDate() !== dd) return null;
+  return `${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+}
+
 function handlePsEntry(digits, { session, ctx, patch, policy, say, push, effects, replies }) {
   const clean = String(digits || '').replace(/\D/g, '');
   if (!clean || clean.length < 4) {
@@ -1015,7 +1148,10 @@ function answerClaim(session, ctx, patch, policy, io, claimId, opts = {}) {
 
   try {
     let plans;
-    if (ctx.claimIntent === 'payment') {
+    if (claim.status === 'Rejected') {
+      // Rejected claims state the recorded reason honestly; payment never applies.
+      plans = [buildRejectionPlan(session.id, claim)].filter(Boolean);
+    } else if (ctx.claimIntent === 'payment') {
       const payment = portal.getFinancePayment(claimId); // throws on finance outage (FR-42)
       plans = buildPaymentPlans(session.id, claim, payment, {
         mapping: policy.payment_status_mapping,

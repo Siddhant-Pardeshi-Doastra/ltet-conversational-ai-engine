@@ -27,6 +27,24 @@ function evidenceRecord(sessionId, claimId, factKey, snapshot) {
   };
 }
 
+/** Plan: rejected claim answer — the recorded reason is stated honestly,
+ *  never hidden behind a generic message. Validated against the fresh row. */
+export function buildRejectionPlan(sessionId, claim) {
+  if (!claim || claim.status !== 'Rejected') return null;
+  const snapshot = { claim_id: claim.claim_id, status: claim.status, reason: claim.rejection_reason ?? null, scheme: claim.scheme_label ?? null };
+  const slots = { status: 'Rejected', reason: claim.rejection_reason ?? null, scheme: claim.scheme_label ?? null };
+  return {
+    kind: 'claim_rejected',
+    templateKey: 'claim_rejected',
+    lang_params: { claim_id: claim.claim_id, scheme: slots.scheme || 'trust scheme', reason: slots.reason || 'not recorded on the source' },
+    slots,
+    validate: (src) => src.claim?.status === 'Rejected'
+      && src.claim?.claim_id === claim.claim_id
+      && (src.claim?.rejection_reason ?? null) === slots.reason,
+    evidence: evidenceRecord(sessionId, claim.claim_id, 'claim.rejection', snapshot),
+  };
+}
+
 /** Plan: claim processing-stage answer (FR-10) with optional open query (FR-12). */
 export function buildClaimStagePlan(sessionId, claim) {
   if (!claim || claim.status !== 'Processing' || !STAGES.includes(claim.stage)) {
@@ -99,11 +117,11 @@ export function buildPaymentPlans(sessionId, claim, payment, { mapping, delayThr
   });
 
   if (!payment) {
-    // Approval recorded but no payment record: state approval only; never invent a payment date/amount.
+    // Approval recorded but no payment issued yet: state exactly that; never invent a date/amount.
     plans.push({
       kind: 'pay_unknown',
-      templateKey: 'pay_unmapped',
-      lang_params: {},
+      templateKey: 'pay_not_issued',
+      lang_params: { claim_id: claimId },
       slots: {},
       validate: (src) => src.claim.status === 'Approved' && src.payment === null,
       evidence: evidenceRecord(sessionId, claimId, 'finance.payment', null),
@@ -247,21 +265,41 @@ export function validateAndRender(sessionId, claimId, plans, { lang, policy, fie
   }
   if (!claim) return { ok: false, reason: 'claim_missing', segments: [], evidence, flags };
 
-  for (let plan of plans) {
+  for (let i = 0; i < plans.length; i++) {
+    let plan = plans[i];
     let source = { claim, payment, mapping: policy.payment_status_mapping };
     if (plan.validate && !plan.validate(source)) {
-      // One safe rebuild from fresh facts.
-      const rebuilt = plan.kind === 'claim_stage' || plan.kind === 'claim_query'
-        ? buildClaimStagePlans(claim, sessionId)
-        : buildPaymentPlans(sessionId, claim, payment, { mapping: policy.payment_status_mapping, delayThresholdDays: policy.payment_delay_threshold_days, fieldFilter });
-      const match = (rebuilt || []).find((p) => p.kind === plan.kind);
-      if (!match) return { ok: false, reason: 'validation_mismatch', segments: [], evidence, flags };
+      // One safe rebuild from fresh facts. The rebuild is constructed entirely
+      // from the fresh snapshot and each of its plans re-validated below — so
+      // adopting the whole set (when the original plan kind no longer exists,
+      // e.g. a cached status intent meeting an approved+credited claim) is
+      // still fact-safe: only source-confirmed facts can be spoken.
+      const rebuilt = plan.kind === 'claim_rejected'
+        ? [buildRejectionPlan(sessionId, claim)].filter(Boolean)
+        : plan.kind === 'claim_stage' || plan.kind === 'claim_query'
+          ? buildClaimStagePlans(claim, sessionId)
+          : buildPaymentPlans(sessionId, claim, payment, { mapping: policy.payment_status_mapping, delayThresholdDays: policy.payment_delay_threshold_days, fieldFilter });
+      const rebuiltList = rebuilt || [];
       source = { claim, payment, mapping: policy.payment_status_mapping };
-      if (match.validate && !match.validate(source)) {
-        return { ok: false, reason: 'validation_mismatch', segments: [], evidence, flags };
+      const match = rebuiltList.find((p) => p.kind === plan.kind);
+      if (match) {
+        if (match.validate && !match.validate(source)) {
+          return { ok: false, reason: 'validation_mismatch', segments: [], evidence, flags };
+        }
+        plans[i] = match;
+        plan = match;
+      } else {
+        // The world changed between plan-build and render: render the rebuilt
+        // set instead, replacing from this index so already-validated plans stay.
+        for (const rb of rebuiltList) {
+          if (rb.validate && !rb.validate(source)) {
+            return { ok: false, reason: 'validation_mismatch', segments: [], evidence, flags };
+          }
+        }
+        plans.splice(i, 1, ...rebuiltList);
+        if (!rebuiltList.length) return { ok: false, reason: 'validation_mismatch', segments: [], evidence, flags };
+        plan = plans[i];
       }
-      plans = plans.map((p) => (p === plan ? match : p));
-      plan = match;
     }
     if (plan.slots?.delayed) flags.delayed = true;
     if (plan.templateKey) {

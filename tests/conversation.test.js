@@ -54,7 +54,7 @@ test('BDD-01 corrected/SEC-01: confirming a matched number does NOT grant access
   await t.call('POST', `/api/calls/${sid}/events`, hangup(), { staff: 'admin1' });
 });
 
-test('BDD-31/FR-49: keypad PS entry with digit-by-digit read-back confirmation', async () => {
+test('BDD-31/FR-49: keypad PS entry with read-back, then knowledge verification (PS + name + DOB)', async () => {
   const r = await t.call('POST', '/api/calls', { caller_number: '+91 91234 00099' }, { staff: 'admin1' });
   const sid = r.json.session.id;
   await t.call('POST', `/api/calls/${sid}/events`, text('I am the employee'), { staff: 'admin1' });
@@ -62,7 +62,13 @@ test('BDD-31/FR-49: keypad PS entry with digit-by-digit read-back confirmation',
   const c = await t.call('POST', `/api/calls/${sid}/events`, text('yes'), { staff: 'admin1' });
   const all = repliesOf(kb) + '\n' + repliesOf(c);
   assert.ok(all.includes('0 0 1 2 3 4'), 'read-back digit by digit');
-  assert.equal(c.json.session.state, 'challenge_pending');
+  assert.equal(c.json.session.state, 'ident_knowledge_name', 'knowledge factor asks for the full name');
+  const nm = await t.call('POST', `/api/calls/${sid}/events`, text('Priya Sharma'), { staff: 'admin1' });
+  assert.equal(nm.json.session.state, 'ident_knowledge_dob');
+  const res = await t.call('POST', `/api/calls/${sid}/events`, keys('15061992'), { staff: 'admin1' });
+  assert.equal(res.json.session.verification.verified, true);
+  assert.equal(res.json.session.verification.method, 'ps_dob');
+  assert.ok(repliesOf(res).includes('CLM-10010'), 'claims listed after knowledge verification');
   await t.call('POST', `/api/calls/${sid}/events`, hangup(), { staff: 'admin1' });
 });
 
@@ -281,15 +287,14 @@ test('BDD-11/FR-13/FR-14: another-claim loop and five-claim cap', async () => {
   await t.call('POST', `/api/calls/${sid}/events`, hangup(), { staff: 'admin1' });
 });
 
-test('BDD-07/FR-07: zero claims explained after verification with human offer', async () => {
-  await t.clearOtp();
+test('BDD-07/FR-07: zero claims explained after knowledge verification with human offer', async () => {
   const r = await t.call('POST', '/api/calls', { caller_number: '+91 91234 00077' }, { staff: 'admin1' });
   const sid = r.json.session.id;
   await t.call('POST', `/api/calls/${sid}/events`, text('I am the employee'), { staff: 'admin1' });
   await t.call('POST', `/api/calls/${sid}/events`, keys('003001'), { staff: 'admin1' });
   await t.call('POST', `/api/calls/${sid}/events`, text('yes'), { staff: 'admin1' });
-  const code = await t.otpFromInbox(sid);
-  const res = await t.call('POST', `/api/calls/${sid}/events`, keys(code), { staff: 'admin1' });
+  await t.call('POST', `/api/calls/${sid}/events`, text('Suman Das'), { staff: 'admin1' });
+  const res = await t.call('POST', `/api/calls/${sid}/events`, keys('08021979'), { staff: 'admin1' });
   assert.ok(repliesOf(res).includes('no open claims'));
   await t.call('POST', `/api/calls/${sid}/events`, hangup(true), { staff: 'admin1' });
 });

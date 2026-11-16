@@ -14,6 +14,11 @@
   <em>Voice assistant that answers verified claim-status, payment &amp; beneficiary enquiries<br/>across 22 languages — then produces auditable post-call intelligence for processors.</em>
 </p>
 
+<!-- Animated hero: gradient shimmer nameplate + call-wave -->
+<p align="center">
+  <img src="docs/banner.svg" alt="LTET Conversational AI Engine — animated banner" width="92%" />
+</p>
+
 <p align="center">
   <a href="#-quickstart"><img src="https://img.shields.io/badge/🚀_Get_Started-in_30_seconds-00C853?style=for-the-badge" alt="Get Started" /></a>
   <a href="docs/DEMO_GUIDE.md"><img src="https://img.shields.io/badge/🎬_Demo_Guide-10_min_walkthrough-7C4DFF?style=for-the-badge" alt="Demo Guide" /></a>
@@ -54,6 +59,40 @@ It's not an IVR. It's not a chatbot. It's a **deterministic voice agent** that:
 <p align="center">
   <img src="docs/screenshots/simulator.png" alt="Call Simulator — Live Voice Agent in Action" width="85%" />
 </p>
+
+<br/>
+
+---
+
+## ☎️ Dial In Like a Real Caller — The Manager's Matrix
+
+A toll-free helpline number, a PS number, a name, a date of birth — and the agent
+verifies and answers **in the caller's language**, straight from live portal data.
+Every persona below is seeded and demo-ready in the Call Simulator:
+
+<p align="center">
+<table>
+<tr><th align="left">PS Number</th><th align="left">Caller</th><th align="left">Speaks</th><th align="left">What the agent will say</th></tr>
+<tr><td><code>20012345</code></td><td>Ramesh Kumar Sharma</td><td>हिन्दी</td><td>📄 Documents pending (read aloud) + 💰 paid — ₹21,500 with bank reference</td></tr>
+<tr><td><code>30098765</code></td><td>Priya Venkatesan</td><td>தமிழ்</td><td>💳 Payment <i>initiated</i> at the bank + 🔎 claim under scrutiny</td></tr>
+<tr><td><code>40055501</code></td><td>Suresh Patil</td><td>मराठी</td><td>❌ Rejected — the recorded reason is stated honestly (death-relief eligibility)</td></tr>
+<tr><td><code>50011122</code></td><td>Anita Banerjee</td><td>বাংলা</td><td>💰 Paid + 🆕 just submitted (processing)</td></tr>
+<tr><td><code>50022233</code></td><td>Kiran Desai</td><td>ગુજરાતી</td><td>⏸️ On hold — reason on record, Finance team informed</td></tr>
+<tr><td><code>50033344</code></td><td>Venkat Reddy</td><td>తెలుగు</td><td>✅ Approved, payment not yet issued (no invented date) + 💰 paid</td></tr>
+<tr><td><code>50044455</code></td><td>Jaspreet Singh</td><td>ਪੰਜਾਬੀ</td><td>📄 Documents pending — calamity-relief certificates requested</td></tr>
+<tr><td><code>50055566</code></td><td>Meera Nair</td><td>മലയാളം</td><td>❌ Rejected — scholarship marks below the minimum, stated plainly</td></tr>
+<tr><td><code>50066677</code></td><td>Arjun Mehta</td><td>English</td><td>🔎 Under scrutiny at Sub-panel Review</td></tr>
+</table>
+</p>
+
+**Verification path:** PS number (keypad, read back digit-by-digit) → full name
+(spoken) → date of birth (spoken — *"12 April 1968"* — or keypad `DDMMYYYY`).
+Fail-closed: two mismatches transfer to the human helpdesk, the outcome is
+recorded as `verification_failed`, and nothing attaches to the claimed record.
+
+> 🔒 **Honesty note:** the knowledge factor (PS+name+DOB) is a *workspace
+> convenience* for this demo matrix. Production keeps the channel-bound OTP —
+> live mode refuses the knowledge factor by policy validation.
 
 <br/>
 

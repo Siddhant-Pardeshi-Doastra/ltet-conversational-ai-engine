@@ -115,10 +115,10 @@ test('SEC-04/FR-49: OTP stored only as hash; raw code absent from DB records and
 
 test('SEC-04: OTP replay is rejected (atomic consume)', async () => {
   await t.clearOtp();
-  const r = await t.call('POST', '/api/calls', { caller_number: '+91 91234 00098' }, { staff: 'admin1' });
+  // Linked caller keeps the channel-bound OTP path (the knowledge factor serves unlinked dial-in).
+  const r = await t.call('POST', '/api/calls', { caller_number: '+91 55555 50002' }, { staff: 'admin1' });
   const sid = r.json.session.id;
-  await t.call('POST', `/api/calls/${sid}/events`, text('I am the employee'), { staff: 'admin1' });
-  await t.call('POST', `/api/calls/${sid}/events`, keys('001234'), { staff: 'admin1' });
+  await t.call('POST', `/api/calls/${sid}/events`, text('yes'), { staff: 'admin1' });
   await t.call('POST', `/api/calls/${sid}/events`, text('yes'), { staff: 'admin1' });
   const code = await t.otpFromInbox(sid);
   const first = await t.call('POST', `/api/calls/${sid}/events`, keys(code), { staff: 'admin1' });
@@ -130,13 +130,16 @@ test('SEC-04: OTP replay is rejected (atomic consume)', async () => {
   await t.call('POST', `/api/calls/${sid}/events`, hangup(true), { staff: 'admin1' });
 });
 
-test('SEC-06/FR-28: failed verification never attaches call history to the claimed PS', async () => {
+test('SEC-06/FR-28: failed knowledge verification never attaches call history to the claimed PS', async () => {
   const r = await t.call('POST', '/api/calls', { caller_number: '+91 91234 00011' }, { staff: 'admin1' });
   const sid = r.json.session.id;
   await t.call('POST', `/api/calls/${sid}/events`, text('I am the employee'), { staff: 'admin1' });
   await t.call('POST', `/api/calls/${sid}/events`, keys('010077'), { staff: 'admin1' });
   await t.call('POST', `/api/calls/${sid}/events`, text('yes'), { staff: 'admin1' });
-  for (let i = 0; i < 3; i++) await t.call('POST', `/api/calls/${sid}/events`, keys('000000'), { staff: 'admin1' });
+  await t.call('POST', `/api/calls/${sid}/events`, text('Vikram Rao'), { staff: 'admin1' });
+  await t.call('POST', `/api/calls/${sid}/events`, keys('99999999'), { staff: 'admin1' });
+  const finalTry = await t.call('POST', `/api/calls/${sid}/events`, keys('99999999'), { staff: 'admin1' });
+  assert.equal(finalTry.json.session.state, 'transfer_pending', 'two knowledge failures transfer out');
   await t.call('POST', `/api/calls/${sid}/events`, hangup(), { staff: 'admin1' });
   await new Promise((r2) => setTimeout(r2, 1300));
   const log = await t.call('GET', `/api/calls/${sid}/log`, { staff: 'admin1' });
@@ -192,7 +195,7 @@ test('SEC-05: demo role switcher is confined to demo mode; engine cannot mutate 
   assert.ok(adminRoutes.default, 'admin router present');
   // claim rows unchanged during all the calls in this suite
   const count = db.prepare(`SELECT COUNT(*) AS c FROM portal_claims`).get().c;
-  assert.equal(count, 24, '24 seeded claims still present, no mutations');
+  assert.equal(count, 37, '37 seeded claims still present, no mutations');
 });
 
 test('SEC-05: cross-role work-queue access is enforced', async () => {
@@ -223,13 +226,13 @@ test('SEC-07: rate limiting blocks OTP request abuse without permanent lockout',
   const { getDb } = await import('../server/db.js');
   const db = getDb();
   db.prepare(`DELETE FROM otp_challenges`).run();
-  // 3 allowed, 4th rejected
+  // Linked callers take the channel-bound OTP path (the knowledge factor serves
+  // unlinked dial-in). 3 challenges allowed, 4th rejected within the window.
   const results = [];
   for (let i = 0; i < 4; i++) {
-    const r = await t.call('POST', '/api/calls', { caller_number: '+91 91234 00050' }, { staff: 'admin1' });
+    const r = await t.call('POST', '/api/calls', { caller_number: '+91 55555 50002' }, { staff: 'admin1' });
     const sid = r.json.session.id;
-    await t.call('POST', `/api/calls/${sid}/events`, text('I am the employee'), { staff: 'admin1' });
-    await t.call('POST', `/api/calls/${sid}/events`, keys('003001'), { staff: 'admin1' });
+    await t.call('POST', `/api/calls/${sid}/events`, text('yes'), { staff: 'admin1' });
     const c = await t.call('POST', `/api/calls/${sid}/events`, text('yes'), { staff: 'admin1' });
     results.push(c.json.session.state === 'challenge_pending');
     await t.call('POST', `/api/calls/${sid}/events`, hangup(), { staff: 'admin1' });

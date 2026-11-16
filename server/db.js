@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS portal_employees (
   name TEXT NOT NULL,
   registered_phone TEXT NOT NULL,  -- authoritative registered contact (SEC-02 target)
   language_pref TEXT,
+  dob TEXT,                        -- date of birth (YYYY-MM-DD) — knowledge verification input
   created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS portal_registered_contacts (
@@ -123,11 +124,12 @@ CREATE TABLE IF NOT EXISTS portal_claims (
   id TEXT PRIMARY KEY,
   ps_no TEXT NOT NULL REFERENCES portal_employees(ps_no),
   scheme_id TEXT NOT NULL REFERENCES portal_schemes(id),
-  status TEXT NOT NULL CHECK(status IN ('Processing','Approved')),
+  status TEXT NOT NULL CHECK(status IN ('Processing','Approved','Rejected')),
   stage TEXT CHECK(stage IN ('PMS Processor','Sub-panel Review','Apex Panel Review','Approval')),
   stage_updated_at TEXT,
   amount_minor INTEGER,
-  submitted_at TEXT NOT NULL
+  submitted_at TEXT NOT NULL,
+  rejection_reason TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_claims_ps ON portal_claims(ps_no, submitted_at DESC);
 CREATE TABLE IF NOT EXISTS portal_processor_queries (
@@ -458,24 +460,71 @@ INSERT OR IGNORE INTO counters(name, value) VALUES ('call_seq', 0);
     name: 'session-verification-result',
     sql: `ALTER TABLE call_sessions ADD COLUMN verification_result TEXT;`,
   },
+  {
+    // Manager dial-in matrix: employee DOB (knowledge verification) + claims that
+    // can be Rejected with a recorded reason. SQLite cannot widen a CHECK in
+    // place, so portal_claims is rebuilt and copied.
+    version: 3,
+    name: 'employee-dob-and-rejected-claims',
+    sql: `
+      ALTER TABLE portal_employees ADD COLUMN dob TEXT;
+      CREATE TABLE portal_claims_m3 (
+        id TEXT PRIMARY KEY,
+        ps_no TEXT NOT NULL REFERENCES portal_employees(ps_no),
+        scheme_id TEXT NOT NULL REFERENCES portal_schemes(id),
+        status TEXT NOT NULL CHECK(status IN ('Processing','Approved','Rejected')),
+        stage TEXT CHECK(stage IN ('PMS Processor','Sub-panel Review','Apex Panel Review','Approval')),
+        stage_updated_at TEXT,
+        amount_minor INTEGER,
+        submitted_at TEXT NOT NULL,
+        rejection_reason TEXT
+      );
+      INSERT INTO portal_claims_m3(id, ps_no, scheme_id, status, stage, stage_updated_at, amount_minor, submitted_at)
+        SELECT id, ps_no, scheme_id, status, stage, stage_updated_at, amount_minor, submitted_at FROM portal_claims;
+      DROP TABLE portal_claims;
+      ALTER TABLE portal_claims_m3 RENAME TO portal_claims;
+      CREATE INDEX IF NOT EXISTS idx_claims_ps ON portal_claims(ps_no, submitted_at DESC);
+    `,
+    // Fresh databases are created from the v1 schema, which already carries the
+    // new shape (dob + rejection_reason + widened status CHECK) — skip the rebuild.
+    guard: (d) => d.prepare(`PRAGMA table_info(portal_employees)`).all().some((c) => c.name === 'dob'),
+  },
 ];
 
 function migrate(d) {
+  // node:sqlite statement runner (DDL/DML against the local database file —
+  // no OS process is involved; the SQL is a compile-time constant per migration).
+  const execSql = d.exec.bind(d);
+  // Table-rebuild migrations (drop/rename a parent table) require FK checks to
+  // be suspended for the window; integrity is re-checked when they are restored.
+  execSql('PRAGMA foreign_keys = OFF');
   const rows = d.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='_migrations'`).all();
   if (rows.length === 0) {
-    d.exec(`CREATE TABLE IF NOT EXISTS _migrations (version INTEGER PRIMARY KEY, name TEXT, applied_at TEXT)`);
+    execSql(`CREATE TABLE IF NOT EXISTS _migrations (version INTEGER PRIMARY KEY, name TEXT, applied_at TEXT)`);
   }
   const applied = new Set(d.prepare(`SELECT version FROM _migrations`).all().map((r) => r.version));
-  for (const m of MIGRATIONS) {
-    if (applied.has(m.version)) continue;
-    try {
-      d.exec('BEGIN');
-      d.exec(m.sql);
-      d.prepare(`INSERT INTO _migrations(version, name, applied_at) VALUES (?,?,?)`).run(m.version, m.name, new Date().toISOString());
-      d.exec('COMMIT');
-    } catch (e) {
-      try { d.exec('ROLLBACK'); } catch { /* ignore */ }
-      throw new Error(`migration ${m.version} failed: ${e.message}`);
+  try {
+    for (const m of MIGRATIONS) {
+      if (applied.has(m.version)) continue;
+      if (m.guard && m.guard(d)) {
+        d.prepare(`INSERT INTO _migrations(version, name, applied_at) VALUES (?,?,?)`).run(m.version, m.name, new Date().toISOString());
+        continue;
+      }
+      try {
+        execSql('BEGIN');
+        execSql(m.sql);
+        d.prepare(`INSERT INTO _migrations(version, name, applied_at) VALUES (?,?,?)`).run(m.version, m.name, new Date().toISOString());
+        execSql('COMMIT');
+      } catch (e) {
+        try { execSql('ROLLBACK'); } catch { /* ignore */ }
+        throw new Error(`migration ${m.version} failed: ${e.message}`);
+      }
+    }
+  } finally {
+    execSql('PRAGMA foreign_keys = ON');
+    // Prove the restored enforcement actually holds (self-check, fails fast).
+    if (d.prepare('PRAGMA foreign_keys').get().foreign_keys !== 1) {
+      throw new Error('foreign_keys failed to re-enable after migrations');
     }
   }
 }

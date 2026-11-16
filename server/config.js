@@ -38,12 +38,18 @@ export const DEFAULT_POLICY = {
   helpdesk_hours: { start: '09:00', end: '18:00', days: [1, 2, 3, 4, 5], timezone: 'Asia/Kolkata' },
   claims_per_call_limit: 5, // FR-14 default five
   claims_narrate_batch: 3, // FR-08 latest three first
+  open_claims_scope: 'all_statuses', // dial-in matrix includes rejected claims so the reason can be stated honestly
   max_call_minutes: 12, // NFR-13 demo value; no invented production limit
   otp: { expiry_seconds: 300, max_attempts: 3, max_resends: 2, required: true }, // SEC-01: default OTP on
   identity: {
     allow_unlinked_fallback: true,
     second_factor: 'otp', // if disabled in live mode, another sufficient method must be configured or disclosure is denied
     beneficiary_name_compare: false, // FR-60 optional
+    // Manager dial-in flow: PS number + full name + date of birth as a knowledge
+    // verification factor. WORKSPACE-ONLY convenience — a knowledge factor is
+    // weaker than the channel-bound OTP, so live mode defaults (and validation
+    // rules) keep it off; enabling it there is a deliberate, audited decision.
+    knowledge_factor: APP.mode !== 'live',
   },
   stage_persona_routing: {
     'PMS Processor': 'pms_processor',
@@ -55,6 +61,7 @@ export const DEFAULT_POLICY = {
     // FR-45: configurable raw Finance status -> caller-facing state. Unmapped values are unreadable, never guessed.
     'Credited': 'credited',
     'Processed': 'processed',
+    'Initiated': 'processed', // disbursement initiated at the bank; still "in process" to the caller
     'Pending': 'pending',
     'Failed': 'failed',
     'Held': 'held',
@@ -98,6 +105,13 @@ export function validatePolicy(doc, { mode = APP.mode } = {}) {
   if (o.required === false && mode === 'live') {
     const sf = doc.identity?.second_factor;
     if (!sf || sf === 'otp') push('SEC-01: OTP disabled in live mode requires identity.second_factor set to another approved method; otherwise disclosure must be denied');
+  }
+  if (doc.identity?.knowledge_factor === true && mode === 'live') {
+    push('SEC-01: identity.knowledge_factor (PS + name + DOB) is a workspace-only convenience and cannot be enabled in live mode');
+  }
+  const scope = doc.open_claims_scope;
+  if (scope !== undefined && !['processing_only', 'processing_and_approved', 'all_statuses'].includes(scope)) {
+    push('open_claims_scope must be one of: processing_only, processing_and_approved, all_statuses');
   }
 
   const spr = doc.stage_persona_routing || {};

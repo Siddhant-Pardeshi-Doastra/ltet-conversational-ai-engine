@@ -216,17 +216,22 @@ function applyEffect(sessionId, eff, ctx, policy) {
       return { type: 'evidence', factKey: eff.evidence.fact_key };
     }
     case 'verification_attempt': {
+      // Method/assurance come from the engine's verification object so every
+      // verified factor (OTP channel-bound, knowledge PS+name+DOB) is recorded
+      // as what it actually was — never relabelled.
+      const method = eff.method || 'otp';
+      const assurance = eff.assurance || 'otp_registered_channel';
       recordAttempt({
-        sessionId, method: 'otp',
+        sessionId, method,
         subjectKind: eff.subjectRole, subjectPsNo: eff.subjectPsNo,
         result: eff.result === 'success' ? 'success' : eff.result === 'locked' ? 'locked' : 'failed',
         attemptsUsed: eff.attemptsUsed,
       });
       if (eff.result === 'success') {
         run(
-          `UPDATE call_sessions SET verified_ps_no = ?, verification_method = 'otp', verification_assurance = 'otp_registered_channel', verified_at = ?
+          `UPDATE call_sessions SET verified_ps_no = ?, verification_method = ?, verification_assurance = ?, verified_at = ?
            WHERE id = ?`,
-          eff.subjectPsNo, nowIso(), sessionId
+          eff.subjectPsNo, method, assurance, nowIso(), sessionId
         );
       }
       return { type: 'verification_attempt', result: eff.result };

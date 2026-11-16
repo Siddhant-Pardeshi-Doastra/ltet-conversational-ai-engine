@@ -87,6 +87,20 @@ export function findEmployee(psNo) {
   return get(`SELECT * FROM portal_employees WHERE ps_no = ?`, String(psNo || '')) || null;
 }
 
+/** Knowledge-factor verification (PS + full name + date of birth), fail-closed.
+ *  Name comparison is case/whitespace-insensitive; DOB must match exactly. The
+ *  portal only answers whether the triple matches a record — it never grants
+ *  access by itself (the engine books the verification and its attempts). */
+export function verifyKnowledge(psNo, name, dobIso) {
+  const emp = findEmployee(psNo);
+  if (!emp || !emp.dob) return { ok: false, reason: 'no_record' };
+  const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const nameOk = norm(emp.name) === norm(name) && norm(name).length >= 3;
+  const dobOk = /^\d{4}-\d{2}-\d{2}$/.test(String(dobIso || '')) && String(emp.dob) === String(dobIso);
+  if (!nameOk || !dobOk) return { ok: false, reason: nameOk ? 'dob_mismatch' : 'name_mismatch' };
+  return { ok: true, employee: emp };
+}
+
 export function registeredContacts(psNo) {
   return all(`SELECT * FROM portal_registered_contacts WHERE ps_no = ?`, String(psNo));
 }
@@ -145,12 +159,17 @@ export function grantIsUsable(grant, atIso = nowIso()) {
  * Live open-claims fetch at call time (FR-06). Sorted newest first.
  * Scope of "open claims" is configurable (open decision with the API owner):
  *  - processing_only           : strictly Processing claims
- *  - processing_and_approved   : Processing + Approved (demo default so UC-02
- *                                entry from an approved selection is demonstrable)
+ *  - processing_and_approved   : Processing + Approved
+ *  - all_statuses              : Processing + Approved + Rejected (the reason on
+ *                                record is then stated honestly, never hidden)
  */
 export function listOpenClaims(psNo, { scope = 'processing_and_approved' } = {}) {
   if (fault('portal_outage')) throw new PortalUnavailableError('demo fault injection: portal_outage');
-  const where = scope === 'processing_only' ? `status = 'Processing'` : `status IN ('Processing','Approved')`;
+  const where = scope === 'processing_only'
+    ? `status = 'Processing'`
+    : scope === 'all_statuses'
+      ? `status IN ('Processing','Approved','Rejected')`
+      : `status IN ('Processing','Approved')`;
   const rows = all(
     `SELECT c.*, s.label AS scheme_label, s.category AS scheme_category
      FROM portal_claims c JOIN portal_schemes s ON s.id = c.scheme_id
@@ -172,11 +191,12 @@ export function toClaimSummary(c) {
     scheme_id: c.scheme_id,
     scheme_label: c.scheme_label ?? null,
     scheme_category: c.scheme_category ?? null,
-    status: c.status, // 'Processing' | 'Approved'
+    status: c.status, // 'Processing' | 'Approved' | 'Rejected'
     stage: c.stage ?? null,
     stage_updated_at: c.stage_updated_at ?? null,
     amount_minor: c.amount_minor ?? null,
     submitted_at: c.submitted_at,
+    rejection_reason: c.rejection_reason ?? null,
     has_open_query: !!q,
     open_query: q ? { id: q.id, stage: q.stage, query_text: q.query_text, raised_at: q.raised_at } : null,
   };

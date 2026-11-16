@@ -23,24 +23,41 @@ const SCHEMES = Array.from({ length: 17 }, (_, i) => ({
   label: `Trust Scheme ${String(i + 1).padStart(2, '0')}`,
   category: ['Medical', 'Travel', 'Education', 'Housing', 'Welfare'][i % 5],
 }));
+// Manager dial-in matrix schemes (real-world named categories)
+SCHEMES.push(
+  { id: 'S18', label: 'Death Relief Scheme', category: 'Welfare' },
+  { id: 'S19', label: 'Merit Scholarship Scheme', category: 'Education' },
+  { id: 'S20', label: 'Calamity Relief Scheme', category: 'Welfare' },
+);
 
-const E = (ps, name, phone, pref) => ({ ps, name, phone, pref });
+const E = (ps, name, phone, pref, dob) => ({ ps, name, phone, pref, dob });
 
+// Synthetic date-of-birth fixtures (labelled synthetic; knowledge-factor inputs).
 const EMPLOYEES = [
-  E('004321', 'Arjun Mehta', '+91 55555 50001', 'hi'),   // 7 claims (cap tests), linked caller
-  E('001234', 'Priya Sharma', '+91 55555 50002', 'en'),  // 1 claim with open PMS query
-  E('010077', 'Vikram Rao', '+91 55555 50003', 'en'),    // approved + credited
-  E('020045', 'Neha Joshi', '+91 55555 50004', 'en'),    // approved + processed (delayed)
-  E('000902', 'Rohit Banerjee', '+91 55555 50005', 'bn'),// approved + pending
-  E('005555', 'Ananya Iyer', '+91 55555 50006', 'ta'),   // approved + failed
-  E('007801', 'Karan Singh', '+91 55555 50007', 'pa'),   // approved + held
-  E('002210', 'Divya Nair', '+91 55555 50008', 'ml'),    // 3 claims mixed stages
-  E('003001', 'Suman Das', '+91 55555 50009', 'bn'),     // zero claims
-  E('009876', 'Anita Kulkarni', '+91 55555 50010', 'mr'),// approved + unmapped raw status
-  E('001111', 'Manoj Verma', '+91 55555 50011', 'hi'),   // approved + credited with missing fields
-  E('006789', 'Lakshmi Subramani', '+91 55555 50012', 'kn'), // landline-only registered contact
-  E('004444', 'Imran Sheikh', '+91 55555 50013', 'ur'),  // 5 claims (cap boundary) — pref falls back to English
-  E('000007', 'Geeta Patel', '+91 55555 50014', 'gu'),   // 1 claim, approved credited (odia speaker profile for language test)
+  E('004321', 'Arjun Mehta', '+91 55555 50001', 'hi', '1988-01-09'),   // 7 claims (cap tests), linked caller
+  E('001234', 'Priya Sharma', '+91 55555 50002', 'en', '1992-06-15'),  // 1 claim with open PMS query
+  E('010077', 'Vikram Rao', '+91 55555 50003', 'en', '1985-03-22'),    // approved + credited
+  E('020045', 'Neha Joshi', '+91 55555 50004', 'en', '1990-11-02'),    // approved + processed (delayed)
+  E('000902', 'Rohit Banerjee', '+91 55555 50005', 'bn', '1987-08-19'),// approved + pending
+  E('005555', 'Ananya Iyer', '+91 55555 50006', 'ta', '1993-04-05'),   // approved + failed
+  E('007801', 'Karan Singh', '+91 55555 50007', 'pa', '1984-09-27'),   // approved + held
+  E('002210', 'Divya Nair', '+91 55555 50008', 'ml', '1991-12-11'),    // 3 claims mixed stages
+  E('003001', 'Suman Das', '+91 55555 50009', 'bn', '1979-02-08'),     // zero claims
+  E('009876', 'Anita Kulkarni', '+91 55555 50010', 'mr', '1986-07-30'),// approved + unmapped raw status
+  E('001111', 'Manoj Verma', '+91 55555 50011', 'hi', '1982-05-14'),   // approved + credited with missing fields
+  E('006789', 'Lakshmi Subramani', '+91 55555 50012', 'kn', '1989-10-21'), // landline-only registered contact
+  E('004444', 'Imran Sheikh', '+91 55555 50013', 'ur', '1983-03-03'),  // 5 claims (cap boundary) — pref falls back to English
+  E('000007', 'Geeta Patel', '+91 55555 50014', 'gu', '1994-01-25'),   // 1 claim, approved credited (odia speaker profile for language test)
+  // ---- Manager dial-in matrix: toll-free helpline 020 4856 4924 ----
+  E('20012345', 'Ramesh Kumar Sharma', '+91 55555 70001', 'hi', '1968-04-12'),
+  E('30098765', 'Priya Venkatesan', '+91 55555 70002', 'ta', '1985-11-03'),
+  E('40055501', 'Suresh Patil', '+91 55555 70003', 'mr', '1979-07-21'),
+  E('50011122', 'Anita Banerjee', '+91 55555 70004', 'bn', '1972-02-14'),
+  E('50022233', 'Kiran Desai', '+91 55555 70005', 'gu', '1990-09-30'),
+  E('50033344', 'Venkat Reddy', '+91 55555 70006', 'te', '1960-12-05'),
+  E('50044455', 'Jaspreet Singh', '+91 55555 70007', 'pa', '1983-06-18'),
+  E('50055566', 'Meera Nair', '+91 55555 70008', 'ml', '1975-03-27'),
+  E('50066677', 'Arjun Mehta', '+91 55555 70009', 'en', '1988-01-09'),
 ];
 
 const C = (id, ps, scheme, status, stage, days, amount, extra = {}) => ({
@@ -72,6 +89,29 @@ const CLAIMS = [
   C('CLM-10103', '004444', 'S12', 'Processing', 'Approval', 4, 350000),
   C('CLM-10104', '004444', 'S15', 'Approved', null, 3, 620000, { pay: 'Credited', creditDaysAgo: 2, bankRef: 'MOCKBANK0077889' }),
   C('CLM-10110', '000007', 'S06', 'Approved', null, 6, 980000, { pay: 'Credited', creditDaysAgo: 5, bankRef: 'MOCKBANK0022334' }),
+  // ---- Manager dial-in matrix scenarios ----
+  // Ramesh: documents pending (open query) + paid
+  C('CLM-10201', '20012345', 'S02', 'Processing', 'PMS Processor', 12, 820000, { query: 'Documents pending — please upload the required supporting documents on the LTET portal.' }),
+  C('CLM-10202', '20012345', 'S05', 'Approved', null, 25, 2150000, { pay: 'Credited', creditDaysAgo: 18, bankRef: 'MOCKBANK0072001' }),
+  // Priya: payment initiated + under scrutiny
+  C('CLM-10203', '30098765', 'S08', 'Approved', null, 6, 1480000, { pay: 'Initiated', approvalDaysAgo: 5 }),
+  C('CLM-10204', '30098765', 'S04', 'Processing', 'Sub-panel Review', 9, 640000, { query: 'Claim is under scrutiny at Sub-panel Review — verification of submitted records in progress.' }),
+  // Suresh: rejected (death relief)
+  C('CLM-10205', '40055501', 'S18', 'Rejected', null, 15, 5000000, { rejection: 'Death relief claim: the declared cause of death does not meet the scheme eligibility criteria (recorded by PMS Processor) [synthetic]' }),
+  // Anita: paid + just submitted
+  C('CLM-10206', '50011122', 'S01', 'Approved', null, 20, 1350000, { pay: 'Credited', creditDaysAgo: 12, bankRef: 'MOCKBANK0072004' }),
+  C('CLM-10207', '50011122', 'S03', 'Processing', 'PMS Processor', 1, 720000),
+  // Kiran: on hold
+  C('CLM-10208', '50022233', 'S13', 'Approved', null, 8, 890000, { pay: 'Held', approvalDaysAgo: 6, held: 'Awaiting cancelled-cheque copy for bank-account verification (recorded by Finance) [synthetic]' }),
+  // Venkat (retired): approved, payment not yet made + paid
+  C('CLM-10209', '50033344', 'S09', 'Approved', null, 5, 1760000, {}), // approval recorded, no finance payment row yet
+  C('CLM-10210', '50033344', 'S11', 'Approved', null, 30, 990000, { pay: 'Credited', creditDaysAgo: 22, bankRef: 'MOCKBANK0072006' }),
+  // Jaspreet: documents pending (calamity relief)
+  C('CLM-10211', '50044455', 'S20', 'Processing', 'PMS Processor', 7, 2600000, { query: 'Documents pending — calamity certificate and damage photographs not yet attached. Please upload on the LTET portal.' }),
+  // Meera: rejected (scholarship, marks below minimum)
+  C('CLM-10212', '50055566', 'S19', 'Rejected', null, 10, 1500000, { rejection: 'Scholarship claim: marks are below the minimum required by the scheme (recorded by PMS Processor) [synthetic]' }),
+  // Arjun: under scrutiny
+  C('CLM-10213', '50066677', 'S14', 'Processing', 'Sub-panel Review', 6, 1130000, { query: 'Claim is under scrutiny at Sub-panel Review — additional verification in progress.' }),
 ];
 
 const BENEFICIARIES = [
@@ -129,18 +169,18 @@ export function seed({ force = false } = {}) {
   }
   // Employees + contacts
   for (const e of EMPLOYEES) {
-    run(`INSERT INTO portal_employees(ps_no, name, registered_phone, language_pref, created_at) VALUES (?,?,?,?,?)`,
-      e.ps, e.name, e.phone, e.pref, now);
+    run(`INSERT INTO portal_employees(ps_no, name, registered_phone, language_pref, dob, created_at) VALUES (?,?,?,?,?,?)`,
+      e.ps, e.name, e.phone, e.pref, e.dob ?? null, now);
     run(`INSERT INTO portal_registered_contacts(id, ps_no, phone, channel) VALUES (?,?,?,?)`,
       `RC-${e.ps}-1`, e.ps, e.phone, e.ps === '006789' ? 'landline' : 'sms_capable');
   }
   // Claims + queries + payments
   for (const c of CLAIMS) {
     run(
-      `INSERT INTO portal_claims(id, ps_no, scheme_id, status, stage, stage_updated_at, amount_minor, submitted_at)
-       VALUES (?,?,?,?,?,?,?,?)`,
+      `INSERT INTO portal_claims(id, ps_no, scheme_id, status, stage, stage_updated_at, amount_minor, submitted_at, rejection_reason)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
       c.id, c.ps, c.scheme, c.status, c.status === 'Approved' ? 'Approval' : c.stage,
-      daysAgoIso(c.days - 1), c.amount, daysAgoIso(c.days)
+      daysAgoIso(c.days - 1), c.amount, daysAgoIso(c.days), c.rejection ?? null
     );
     if (c.query) {
       run(`INSERT INTO portal_processor_queries(id, claim_id, stage, query_text, raised_at, status)
@@ -194,7 +234,9 @@ function seedHistoricalCalls() {
   const outcomes = ['resolved', 'resolved', 'resolved', 'escalated', 'verification_failed', 'abandoned', 'resolved'];
   const intents = ['claim_status', 'claim_status', 'payment_information', 'claim_status', 'other'];
   const claimsByPs = {};
-  for (const c of CLAIMS) (claimsByPs[c.ps] = claimsByPs[c.ps] || []).push(c.id);
+  for (const c of CLAIMS) {
+    if (c.status !== 'Rejected') (claimsByPs[c.ps] = claimsByPs[c.ps] || []).push(c.id);
+  }
 
   let n = 0;
   for (let d = 13; d >= 0; d--) {

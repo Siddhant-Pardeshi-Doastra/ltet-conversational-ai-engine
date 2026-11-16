@@ -16,7 +16,30 @@ let presets = [
   { label: 'Impostor beneficiary (no binding)', number: '+91 91234 00042' },
   { label: 'Revoked grant (Amit)', number: '+91 55555 51004' },
   { label: 'Landline beneficiary (no SMS)', number: '+91 55555 61005' },
+  // ---- Manager dial-in matrix: helpline 020 4856 4924 (PS + name + DOB) ----
+  { label: 'Dial-in: Ramesh Kumar Sharma · हिन्दी · docs pending + paid', number: '+91 90051 20001' },
+  { label: 'Dial-in: Priya Venkatesan · தமிழ் · initiated + scrutiny', number: '+91 90051 20002' },
+  { label: 'Dial-in: Suresh Patil · मराठी · rejected (death relief)', number: '+91 90051 20003' },
+  { label: 'Dial-in: Anita Banerjee · বাংলা · paid + just submitted', number: '+91 90051 20004' },
+  { label: 'Dial-in: Kiran Desai · ગુજરાતી · on hold', number: '+91 90051 20005' },
+  { label: 'Dial-in: Venkat Reddy · తెలుగు · approved not paid + paid', number: '+91 90051 20006' },
+  { label: 'Dial-in: Jaspreet Singh · ਪੰਜਾਬੀ · docs pending (calamity)', number: '+91 90051 20007' },
+  { label: 'Dial-in: Meera Nair · മലയാളം · rejected (scholarship)', number: '+91 90051 20008' },
+  { label: 'Dial-in: Arjun Mehta · English · under scrutiny', number: '+91 90051 20009' },
 ];
+
+// Manager matrix: PS + name + date of birth for the knowledge verification path.
+const DIAL_PROFILES = {
+  '+91 90051 20001': { ps: '20012345', name: 'Ramesh Kumar Sharma', dob: '12041968' },
+  '+91 90051 20002': { ps: '30098765', name: 'Priya Venkatesan', dob: '03111985' },
+  '+91 90051 20003': { ps: '40055501', name: 'Suresh Patil', dob: '21071979' },
+  '+91 90051 20004': { ps: '50011122', name: 'Anita Banerjee', dob: '14021972' },
+  '+91 90051 20005': { ps: '50022233', name: 'Kiran Desai', dob: '30091990' },
+  '+91 90051 20006': { ps: '50033344', name: 'Venkat Reddy', dob: '05121960' },
+  '+91 90051 20007': { ps: '50044455', name: 'Jaspreet Singh', dob: '18061983' },
+  '+91 90051 20008': { ps: '50055566', name: 'Meera Nair', dob: '27031975' },
+  '+91 90051 20009': { ps: '50066677', name: 'Arjun Mehta', dob: '09011988' },
+};
 
 export async function renderSimulator(root, params = {}) {
   // Language catalogue from the platform (FRS core + extended), grouped.
@@ -72,7 +95,9 @@ export async function renderSimulator(root, params = {}) {
       <div style="display:flex;flex-direction:column;gap:14px">
         <div class="card sim-setup"><div class="card-h"><h3>Call setup</h3>
           <div class="right"><span class="pill info" id="voice-source">voice: …</span></div></div><div class="card-b">
+          <div class="dialin-note">Toll-free helpline · <b class="mono">020 4856 4924</b> — dial-in callers verify with <b>PS number → full name → date of birth</b>.</div>
           <label class="field"><span>Caller line (test number)</span><input type="text" id="caller-number" value="+91 55555 50001" /></label>
+          <div class="btn-row" id="dialin-fill" style="display:none"><button class="btn sm" id="fill-ps">Keypad: PS</button><button class="btn sm" id="fill-name">Speak: name</button><button class="btn sm" id="fill-dob">Keypad: DOB</button><span class="small muted" id="dialin-hint"></span></div>
           <label class="field"><span>Test caller profile</span>
             <select id="caller-preset"><option value="">— pick a scenario —</option>
               ${presets.map((p, i) => `<option value="${i}">${esc(p.label)}</option>`).join('')}</select></label>
@@ -164,6 +189,16 @@ export async function renderSimulator(root, params = {}) {
   $('#caller-preset').addEventListener('change', (e) => {
     const p = presets[Number(e.target.value)];
     if (p) $('#caller-number').value = p.number;
+    // Dial-in matrix helper: one-tap PS/name/DOB entry for the knowledge flow.
+    const profile = DIAL_PROFILES[$('#caller-number').value];
+    const row = $('#dialin-fill');
+    row.style.display = profile ? 'flex' : 'none';
+    if (profile) {
+      $('#dialin-hint').textContent = `PS ${profile.ps} · ${profile.name}`;
+      $('#fill-ps').onclick = () => { keyBuffer = profile.ps; keyBuf().textContent = '•'.repeat(profile.ps.length); };
+      $('#fill-name').onclick = () => { $('#utter').value = profile.name; $('#utter').focus(); };
+      $('#fill-dob').onclick = () => { keyBuffer = profile.dob; keyBuf().textContent = '•'.repeat(profile.dob.length); };
+    }
   });
   // Quick utterance chips: one tap runs a real Hinglish phrase through the engine.
   root.querySelectorAll('[data-hint]').forEach((b) => b.addEventListener('click', () => {
