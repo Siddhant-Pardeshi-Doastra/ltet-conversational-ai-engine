@@ -23,6 +23,7 @@
   <a href="#-quickstart"><img src="https://img.shields.io/badge/🚀_Get_Started-in_30_seconds-00C853?style=for-the-badge" alt="Get Started" /></a>
   <a href="docs/DEMO_GUIDE.md"><img src="https://img.shields.io/badge/🎬_Demo_Guide-10_min_walkthrough-7C4DFF?style=for-the-badge" alt="Demo Guide" /></a>
   <a href="docs/ARCHITECTURE.md"><img src="https://img.shields.io/badge/🏗️_Architecture-deep_dive-FF6D00?style=for-the-badge" alt="Architecture" /></a>
+  <a href="https://render.com/deploy?repo=https://github.com/Siddhant-Pardeshi-Doastra/ltet-conversational-ai-engine"><img src="https://img.shields.io/badge/⚡_Deploy-live_on_Render-free-46E3B7?style=for-the-badge" alt="Deploy to Render" /></a>
 </p>
 
 <p align="center">

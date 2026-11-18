@@ -1,0 +1,21 @@
+# Render blueprint — free web service for the LTET Conversational AI Engine.
+# The app is a long-running Express + node:sqlite server: it binds 0.0.0.0,
+# honors PORT, and auto-migrates + auto-seeds the workspace fixtures on boot,
+# so the ephemeral free-tier disk needs no setup. PORT is injected by Render.
+services:
+  - type: web
+    name: ltet-voice-agent
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22.22.0"   # node:sqlite unflagged; matches the version the build is tested on
+      - key: HOST
+        value: 0.0.0.0     # required for Render's edge to reach the service
+      - key: LTET_MODE
+        value: demo        # workspace fixtures + demo verification flows
